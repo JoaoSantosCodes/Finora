@@ -44,7 +44,7 @@ npm run preview
    - **Build output directory**: `dist`
 4. Salve e faça o deploy.
 
-O arquivo `public/_redirects` já garante o roteamento SPA.
+O roteamento SPA é tratado pelo `wrangler.toml` (`not_found_handling = "single-page-application"`), e o `[build] command` garante que o `npm run build` rode antes de publicar.
 
 ## Próximos passos possíveis
 
