@@ -1,6 +1,10 @@
 name = "finora"
 compatibility_date = "2025-08-31"
 
+# Roda o build do Vite antes de publicar (garante que ./dist exista)
+[build]
+command = "npm run build"
+
 # Servir a SPA a partir da pasta de build do Vite
 [assets]
 directory = "./dist"
