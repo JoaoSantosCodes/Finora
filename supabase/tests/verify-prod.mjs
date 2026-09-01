@@ -92,12 +92,62 @@ try {
   // ── DB-003: índice único parcial de "um owner por household" ──
   const ownerIdx = await client.query(`select 1 from pg_indexes where indexname = 'household_one_owner'`)
   check(ownerIdx.rows.length === 1, 'DB-003: índice household_one_owner existe (um owner por household)')
+  // ── DB-005: Tabelas do schema financeiro existem ──
+  const finTables = [
+    'accounts',
+    'categories',
+    'credit_cards',
+    'credit_card_invoices',
+    'installment_plans',
+    'transactions',
+    'installments',
+  ]
+  for (const t of finTables) {
+    const r = await client.query(
+      `select 1 from information_schema.tables where table_schema='public' and table_name=$1`,
+      [t],
+    )
+    check(r.rows.length === 1, `DB-005: tabela financeiras ${t} existe`)
+  }
+
+  // ── DB-005: RLS ENABLE + FORCE nas 7 tabelas financeiras ──
+  for (const t of finTables) {
+    const r = await client.query(
+      `select relrowsecurity as enabled, relforcerowsecurity as forced
+       from pg_class where relname = $1 and relnamespace = 'public'::regnamespace`,
+      [t],
+    )
+    check(r.rows[0]?.enabled === true, `DB-005: RLS ENABLE ativo em ${t}`)
+    check(r.rows[0]?.forced === true, `DB-005: RLS FORCE ativo em ${t}`)
+  }
+
+  // ── DB-005: Índices únicos do schema financeiro ──
+  const expectedIndexes = [
+    'categories_household_name_key',
+    'credit_card_invoices_card_cycle_key',
+    'transactions_external_ref_key',
+  ]
+  for (const idx of expectedIndexes) {
+    const r = await client.query(`select 1 from pg_indexes where indexname = $1`, [idx])
+    check(r.rows.length === 1, `DB-005: índice único ${idx} existe`)
+  }
+
+  // ── DB-005: Funções de trigger financeiras ──
+  const expectedTriggers = [
+    'sync_invoice_household_id',
+    'sync_installment_household_id',
+    'validate_transaction_household_id',
+  ]
+  for (const fn of expectedTriggers) {
+    const r = await client.query(`select 1 from pg_proc where proname = $1`, [fn])
+    check(r.rows.length === 1, `DB-005: função de trigger ${fn}() existe`)
+  }
 } finally {
   await client.end()
 }
 
 if (failures > 0) {
-  console.error(`\n${failures} verificação(ões) falharam. Fundação (DB-002..DB-004) NÃO validada em produção.`)
+  console.error(`\n${failures} verificação(ões) falharam. Validação de produção NÃO passou.`)
   process.exit(1)
 }
-console.log('\nGATE 1: todas as verificações de produção passaram.')
+console.log('\nDB-005 & GATE 1: todas as verificações de produção passaram.')
