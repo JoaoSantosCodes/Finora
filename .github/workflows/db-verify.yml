@@ -1,0 +1,45 @@
+name: DB Verify/Apply (GATE 1)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_apply:
+        description: 'Aplicar migrações (db:apply)? Só marque se tiver certeza.'
+        type: boolean
+        default: false
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Run db:verify (somente leitura)
+        run: npm run db:verify
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  apply:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_apply == true
+    runs-on: ubuntu-latest
+    environment: production
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Run db:apply
+        run: npm run db:apply
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Run db:verify (pós-apply)
+        run: npm run db:verify
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
