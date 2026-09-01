@@ -26,6 +26,19 @@ supabase link --project-ref <ref>
 supabase db push
 ```
 
+## Verificação pós-deploy (obrigatória)
+
+Algumas invariantes só existem no ambiente real (Supabase), não no teste local (PGlite). Elas **devem** ser verificadas antes de considerar uma migração aplicada em produção.
+
+**DB-002 — FK `profiles_id_fkey`:** a FK `profiles.id → auth.users(id)` é criada condicionalmente (o schema `auth` não existe no PGlite). Se, por qualquer motivo, o schema `auth` não estiver presente no momento da aplicação, a migração emite um `RAISE NOTICE` e a tabela sobe **sem a FK**. Portanto, após aplicar em produção:
+
+```bash
+# contra o banco real (não PGlite)
+DATABASE_URL="postgres://..." node supabase/tests/verify-prod.mjs
+```
+
+O script falha com exit ≠ 0 se `profiles_id_fkey` não existir. **Não considerar DB-002 aplicada em produção enquanto essa verificação não passar.** (Requer `npm i -D pg`.)
+
 ## Provisionamento
 
 O projeto Supabase é provisionado **após a Tarefa 1 (FOUNDATION)** e **antes de executar DB-001**. A conexão com o ambiente de desenvolvimento (URL + chaves) fica em variáveis de ambiente (`.env.local`), nunca no repositório. A migração `0001_extensions.sql` já está pronta e será aplicada assim que o projeto existir.

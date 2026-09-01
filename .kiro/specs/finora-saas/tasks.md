@@ -66,7 +66,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
     { "wave": 3, "tasks": [3] },
     { "wave": 4, "tasks": [4] },
     { "wave": 5, "tasks": [5, 9] },
-    { "wave": 6, "tasks": [6, 7] },
+    { "wave": 6, "tasks": [31, 6, 7] },
     { "wave": 7, "tasks": [8, 10, 11] },
     { "wave": 8, "tasks": [12, 14] },
     { "wave": 9, "tasks": [13, 19, 23, 24, 27] },
@@ -105,14 +105,14 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** base do schema pronta para as demais migrações.
   - _Requirements: 21, design §Data Models_
 
-- [ ] 3. DB-002 — Schema de Identity (profiles)
+- [x] 3. DB-002 — Schema de Identity (profiles)
   - **Objetivo:** criar `profiles` vinculado ao usuário de auth.
   - **Contexto:** design.md §Domain Model (Identity), §Data Models.
   - **Arquivos/módulos:** `supabase/migrations/0002_identity.sql`.
   - **Dependências:** DB-001.
-  - **Implementação:** tabela `profiles` (`id` = auth uid, `email` único, `display_name`, `locale`, `timezone`, timestamps); trigger de sincronização com o provedor de auth.
+  - **Implementação:** tabela `profiles` (`id` = auth uid, `email` único case-insensitive, `display_name`, `locale`, `timezone`, timestamps); trigger `set_updated_at`; FK `profiles_id_fkey → auth.users` condicional (com `RAISE NOTICE` quando o schema `auth` não existe, ex.: PGlite).
   - **Critérios de aceitação:** criar um usuário de auth gera/permite um profile correspondente.
-  - **Testes:** inserção e unicidade de e-mail.
+  - **Testes:** validado via PGlite (`run-migration.mjs`): colunas/tipos/defaults, índice único case-insensitive, trigger, idempotência. Verificação de produção via `verify-prod.mjs` (ver GATE 1).
   - **DoD:** identidade persistida e única.
   - _Requirements: 1, 3_
 
@@ -137,6 +137,17 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Testes:** testes negativos A→B; acesso negado com RLS mal configurado.
   - **DoD:** fundação fail-closed comprovada por teste.
   - _Requirements: 5, 21.3, 21.4 — valida Correctness Property 8_
+
+- [ ] 31. GATE 1 — Verificação da fundação contra o Supabase real (`verify-prod.mjs`)
+  - **Objetivo:** garantir que invariantes que só existem no banco real (não no PGlite) estejam presentes antes de fechar o GATE 1. Impede que passos manuais documentados sejam esquecidos sob pressão de prazo.
+  - **Contexto:** design.md §Data Models (FK/RLS); `supabase/README.md` §Verificação pós-deploy.
+  - **Arquivos/módulos:** `supabase/tests/verify-prod.mjs`, devDependency `pg`.
+  - **Dependências:** DB-002, DB-003, DB-004, e projeto Supabase provisionado (`DATABASE_URL`).
+  - **Implementação:** aplicar as migrações 0001–0004 no Supabase real; rodar `DATABASE_URL=... node supabase/tests/verify-prod.mjs`; estender o script com as invariantes de DB-003/DB-004 (ex.: presença das policies de RLS e do índice único parcial de owner) conforme forem entregues.
+  - **Critérios de aceitação:** `verify-prod.mjs` sai com código 0 contra o Supabase real; `profiles_id_fkey` confirmada.
+  - **Regra de gate:** **GATE 1 não fecha enquanto `verify-prod.mjs` não estiver verde contra o Supabase real.** Também deve compor o gate de staging (DEP-002).
+  - **DoD:** fundação (Identity + Household + RLS) verificada no ambiente real, não só no PGlite.
+  - _Requirements: 5, 21.3, 21.4_
 
 - [ ] 6. DB-005 — Schema Financeiro (accounts, categories, transactions, cards, invoices, installments)
   - **Objetivo:** criar o núcleo de dados financeiros com dinheiro em centavos e RLS.
@@ -511,7 +522,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Objetivo:** ambiente espelho que funciona como **gate obrigatório** — produção só é liberada após todos os checks passarem.
   - **Contexto:** design.md §Deployment/CI-CD, §Security, §Testing Strategy.
   - **Arquivos/módulos:** config Cloudflare (staging) + projeto Supabase (staging).
-  - **Dependências:** DEP-001, DATA-001, SYNC-001, BILL-003, QA-001, QA-002, QA-003.
+  - **Dependências:** DEP-001, GATE 1 (verify-prod verde), DATA-001, SYNC-001, BILL-003, QA-001, QA-002, QA-003.
   - **Implementação:** deploy automático de staging e execução da checklist de gate abaixo.
   - **Checklist de gate (todos obrigatórios):**
     1. Migrações de banco aplicam limpo em staging.
@@ -521,6 +532,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
     5. Offline/Sync: idempotência e resolução de conflito.
     6. Performance: Dashboard <2s p95 com dataset de ~5000 transações.
     7. Migração de dados do V0 validada em staging.
+    8. `verify-prod.mjs` verde contra o banco (fundação: FK, RLS, invariantes reais).
   - **Critérios de aceitação:** os 7 checks passam; caso algum falhe, produção fica bloqueada.
   - **Testes:** suíte completa executada em staging.
   - **DoD:** gate verde, pré-requisito de DEP-003.

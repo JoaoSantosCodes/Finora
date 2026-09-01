@@ -21,10 +21,11 @@ _Atualizado após o UX Design e o redesign do V0._
 |---|---|---|
 | 1. FOUNDATION | ✅ | Monorepo, boundaries, Financial Core puro (`packages/core`) |
 | 2. DB-001 Extensions | ✅ | Migração `0001_extensions.sql` validada via PGlite (idempotente, pgcrypto, 10 enums, trigger) |
-| 3. DB-002 Identity | ⏳ próximo | `profiles` |
-| 4. DB-003 Household | ⏳ | households, members, invitations |
+| 3. DB-002 Identity | ✅ | `profiles` validado via PGlite (email único case-insensitive, trigger, FK condicional com aviso) |
+| 4. DB-003 Household | ⏳ próximo | households, members, invitations |
 | 5. DB-004 RLS Foundation | ⏳ | fail-closed + `is_household_member` |
-| **GATE 1** | 🔒 | Libera após DB-002→DB-004 validadas |
+| 31. GATE 1 verify-prod | ⏳ | `verify-prod.mjs` verde contra o Supabase real (FK/RLS) — obrigatório para fechar o gate |
+| **GATE 1** | 🔒 | Libera após DB-003, DB-004 e verify-prod verde no banco real |
 
 ## Trabalho paralelo (V0 sempre funcional)
 
@@ -41,7 +42,7 @@ _Atualizado após o UX Design e o redesign do V0._
 ## Próximos passos sugeridos
 
 1. Rotacionar a secret key do Supabase.
-2. DB-002 (Identity) — escrever e validar `0002_identity.sql`.
-3. DB-003, DB-004 → fechar GATE 1.
-4. Provisionar Supabase e aplicar as migrações no ambiente real.
+2. DB-003 (Household) — escrever e validar `0003_household.sql`.
+3. DB-004 (RLS Foundation).
+4. Provisionar Supabase, aplicar migrações e rodar `verify-prod.mjs` (GATE 1).
 5. CORE-001 (Financial Core completo) em paralelo à fundação de banco.
