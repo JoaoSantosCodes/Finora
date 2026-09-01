@@ -94,7 +94,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** V0 intacto, estrutura e fitness function de imports ativas.
   - _Requirements: design §Architecture (Financial Core independente de UI)_
 
-- [ ] 2. DB-001 — Extensões e convenções base do PostgreSQL
+- [x] 2. DB-001 — Extensões e convenções base do PostgreSQL
   - **Objetivo:** provisionar o projeto Postgres/Supabase e habilitar extensões e convenções globais.
   - **Contexto:** design.md §Data Models (Convenções globais).
   - **Arquivos/módulos:** `supabase/migrations/0001_extensions.sql`.
