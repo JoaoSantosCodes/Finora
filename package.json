@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
     "test:db": "node supabase/tests/run-migration.mjs",
+    "db:apply": "node supabase/tests/apply-migrations.mjs",
+    "db:verify": "node supabase/tests/verify-prod.mjs",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -22,6 +24,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.19",
+    "pg": "^8.23.0",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.7",
     "typescript": "^5.5.3",

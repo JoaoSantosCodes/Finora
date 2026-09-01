@@ -4,14 +4,14 @@ Acompanhamento do progresso. A fonte de verdade das tarefas é [`.kiro/specs/fin
 
 _Atualizado após o UX Design e o redesign do V0._
 
-## 🔴 AÇÃO DE SEGURANÇA PENDENTE (fazer AGORA, ~10 min, fora do Kiro)
+## ✅ Segurança — secrets rotacionados
 
-Dois secrets foram expostos em chat e continuam potencialmente ativos. Rotacionar **não depende de código nem de provisionar o Supabase** — é ação manual nos painéis. Enquanto não for feito, há risco de credencial comprometida viva.
+Os dois secrets expostos em chat foram **rotacionados** (ação manual do usuário, confirmada). As chaves antigas não valem mais; risco da exposição zerado.
 
-- [ ] **Supabase secret key** — Dashboard → Project Settings → API Keys → secret key `default` → **Rotate/Regenerate**. Guardar a nova só em `.env.local` / config do Supabase.
-- [ ] **Google OAuth client secret** (`GOCSPX-...`) — Google Cloud Console → APIs & Services → Credentials → OAuth client → **Reset secret**. Guardar a nova só no Supabase (Auth → Providers → Google), nunca em arquivo.
+- [x] **Supabase secret key** — rotacionada. Nova chave só em `.env.local` / config do Supabase.
+- [x] **Google OAuth client secret** — rotacionado. Nova chave só no Supabase (Auth → Providers → Google).
 
-Depois de rotacionar, marcar os itens acima. As chaves antigas passam a não valer nada, zerando o risco da exposição.
+Regra permanente: secrets nunca vão para o repositório (apenas `.env.example` com placeholders) nem para o chat.
 
 ---
 
