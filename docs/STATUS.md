@@ -33,6 +33,7 @@ _Atualizado após o UX Design e o redesign do V0._
 |---|---|---|
 | Redesign V0 (Financial OS) | ✅ | `da50edb` |
 | UX Design documentado | ✅ | `5432578` |
+| CORE-001 Financial Core (puro, 17 testes, property-based) | ✅ | — |
 
 ## Pendências e bloqueios
 

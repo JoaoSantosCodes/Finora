@@ -2,9 +2,7 @@
 // Valores em centavos. Puro: sem I/O, sem browser APIs.
 
 import type { Cents } from './money'
-
-export type TxType = 'income' | 'expense' | 'transfer'
-export type PaymentStatus = 'paid' | 'pending'
+import type { TxType, PaymentStatus } from './types'
 
 export interface CoreTransaction {
   type: TxType

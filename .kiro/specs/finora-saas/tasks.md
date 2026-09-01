@@ -171,16 +171,16 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** billing e idempotência prontos no banco.
   - _Requirements: 17, 18, 19.5 — valida Correctness Property 9_
 
-- [ ] 8. CORE-001 — Financial Core (regras puras, sem I/O)
+- [x] 8. CORE-001 — Financial Core (regras puras, sem I/O)
   - **Objetivo:** implementar as regras financeiras compartilhadas por backend/web/mobile.
   - **Contexto:** design.md §Domain Model, §Correctness Properties, princípio do Financial Core.
-  - **Arquivos/módulos:** `src/core/money.ts`, `src/core/transactions.ts`, `src/core/balance.ts`, `src/core/invoice.ts`, `src/core/installments.ts`, `src/core/analytics.ts`.
-  - **Dependências:** DB-005 (para alinhar tipos), Tarefa 1.
-  - **Implementação:** aritmética em centavos; regra transfer neutra; saldo efetivado (só `paid`); alocação de fatura por ciclo (closing_day); divisão de parcelas com sobra na última; totais de analytics (exclui transfer, pendente acumulado). Puro, sem imports proibidos.
-  - **Critérios de aceitação:** funções puras determinísticas; nenhuma dependência de I/O.
-  - **Testes:** ver QA-001 (unit + property-based).
+  - **Arquivos/módulos:** `packages/core/src/{money,types,transactions,invoice,analytics}.ts` + testes `*.test.ts`.
+  - **Dependências:** Tarefa 1.
+  - **Implementação:** aritmética em centavos; validação de transação (amount>0, transfer origem≠destino); saldo efetivado (só `paid`); transfer neutra; alocação de fatura por ciclo (closing_day) e total derivado; divisão de parcelas com sobra na última; totais de analytics (exclui transfer, pendente acumulado). Puro, sem imports proibidos (verificado). Test runner: Vitest + fast-check; `typecheck` de produção exclui testes (mantém a fitness function de pureza no `src`).
+  - **Critérios de aceitação:** funções puras determinísticas; nenhuma dependência de I/O; typecheck de produção limpo.
+  - **Testes:** 17 testes verdes, incluindo property-based — Property 1 (transfer neutra), 2 (amount>0), 3 (soma parcelas=total), 6 (pendente acumulado), 4 (fatura derivada).
   - **DoD:** Core cobre as invariantes e passa nos testes de propriedade.
-  - _Requirements: 8, 9, 10, 11, 15 — valida Correctness Properties 1–6_
+  - _Requirements: 8, 9, 10, 11, 15 — valida Correctness Properties 1–4, 6_
 
 - [ ] 9. AUTH-001 — Integração de autenticação (email/senha + Google, sessões)
   - **Objetivo:** habilitar login/cadastro, OAuth Google, reset e sessão de 24h, fluindo `auth.uid()` para o RLS.
