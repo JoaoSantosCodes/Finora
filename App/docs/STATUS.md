@@ -35,8 +35,8 @@ Regra permanente: secrets nunca vão para o repositório (apenas `.env.example` 
 | 3. DB-002 Identity | ✅ | `profiles` validado via PGlite (email único case-insensitive, trigger, FK condicional com aviso) |
 | 4. DB-003 Household | ✅ | households/members/invitations; índice parcial "um owner" (4 bordas) + trigger de sync do owner_id |
 | 5. DB-004 RLS Foundation | ✅ | FORCE + fail-closed + `is_household_member`/`has_household_role`; RLS em profiles; permissões por papel (convite owner/admin); validado via PGlite |
-| 31. GATE 1 verify-prod | ✅ | Fundação (DB-001..DB-004) validada e fechada |
-| **GATE 1** | ✅ | Concluído — Identity + Household + RLS Foundation + Core prontos |
+| 31. GATE 1 verify-prod | ⏳ pendente | Bloqueado por rede local (ETIMEDOUT); aguarda execução remota via CI/hotspot |
+| **GATE 1** | 🔒 | Bloqueado — Requer `verify-prod.mjs` verde contra o Supabase real |
 
 ## Trabalho paralelo (V0 sempre funcional)
 

@@ -138,7 +138,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** fundação fail-closed comprovada por teste.
   - _Requirements: 5, 21.3, 21.4 — valida Correctness Property 8_
 
-- [x] 31. GATE 1 — Verificação da fundação contra o Supabase real (`verify-prod.mjs`)
+- [ ] 31. GATE 1 — Verificação da fundação contra o Supabase real (`verify-prod.mjs`)
   - **Objetivo:** garantir que invariantes que só existem no banco real (não no PGlite) estejam presentes antes de fechar o GATE 1. Impede que passos manuais documentados sejam esquecidos sob pressão de prazo.
   - **Contexto:** design.md §Data Models (FK/RLS); `supabase/README.md` §Verificação pós-deploy.
   - **Arquivos/módulos:** `supabase/tests/verify-prod.mjs`, devDependency `pg`.
