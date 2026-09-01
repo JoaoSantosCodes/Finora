@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
     "test:db": "node supabase/tests/run-migration.mjs",
-    "db:apply": "node --env-file=.env.local supabase/tests/apply-migrations.mjs",
-    "db:verify": "node --env-file=.env.local supabase/tests/verify-prod.mjs",
+    "db:apply": "node supabase/tests/apply-migrations.mjs",
+    "db:verify": "node supabase/tests/verify-prod.mjs",
     "lint": "eslint ."
   },
   "dependencies": {
