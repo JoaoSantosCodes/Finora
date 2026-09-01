@@ -364,4 +364,15 @@ assert(delRes.rowCount === 0, 'member NÃO pode deletar conta bancária (0 linha
 await db.query(`reset role`)
 await db.query(`select set_config('app.current_user_id', '', false)`)
 
+// 11.6 Testar validação de cross-household mismatch (account_id de outro household no insert de transaction)
+const accH3 = (await db.query(`insert into accounts (household_id, name, type) values ($1, 'Conta H3', 'checking') returning id`, [h3])).rows[0].id
+let crossHouseholdBlocked = false
+try {
+  await db.query(`insert into transactions (household_id, type, amount_cents, account_id, accrual_date) values ($1, 'expense', 1000, $2, '2026-09-01')`, [h1, accH3])
+} catch { crossHouseholdBlocked = true }
+assert(crossHouseholdBlocked, 'trigger validate_transaction_household_id bloqueia transação com account_id de outro household')
+
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
 console.log('\nTodos os checks passaram. Migrações DB-001 a DB-005 válidas.')

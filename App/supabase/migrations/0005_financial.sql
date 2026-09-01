@@ -46,7 +46,7 @@ create table if not exists public.credit_cards (
 -- Nota: household_id é denormalizado e mantido via trigger para RLS de ultra-alta performance
 create table if not exists public.credit_card_invoices (
   id uuid primary key default gen_random_uuid(),
-  household_id uuid not null references public.households(id) on delete cascade,
+  household_id uuid references public.households(id) on delete cascade,
   credit_card_id uuid not null references public.credit_cards(id) on delete cascade,
   cycle date not null,
   due_date date not null,
@@ -95,7 +95,7 @@ create table if not exists public.transactions (
 -- Nota: household_id é denormalizado e mantido via trigger para RLS de ultra-alta performance
 create table if not exists public.installments (
   id uuid primary key default gen_random_uuid(),
-  household_id uuid not null references public.households(id) on delete cascade,
+  household_id uuid references public.households(id) on delete cascade,
   installment_plan_id uuid not null references public.installment_plans(id) on delete cascade,
   number integer not null check (number > 0),
   amount_cents bigint not null check (amount_cents > 0),
@@ -169,15 +169,24 @@ create trigger sync_invoice_household_id_trigger
 create or replace function public.sync_installment_household_id()
 returns trigger language plpgsql as $$
 begin
-  if new.invoice_id is not null then
-    select household_id into new.household_id
-    from public.credit_card_invoices
-    where id = new.invoice_id;
-  elsif new.transaction_id is not null then
-    select household_id into new.household_id
-    from public.transactions
-    where id = new.transaction_id;
+  if new.household_id is null then
+    if new.invoice_id is not null then
+      select household_id into new.household_id
+      from public.credit_card_invoices
+      where id = new.invoice_id;
+    elsif new.transaction_id is not null then
+      select household_id into new.household_id
+      from public.transactions
+      where id = new.transaction_id;
+    end if;
   end if;
+
+  if new.household_id is null and new.installment_plan_id is not null then
+    select household_id into new.household_id
+    from public.installment_plans
+    where id = new.installment_plan_id;
+  end if;
+
   return new;
 end;
 $$;
@@ -186,6 +195,56 @@ drop trigger if exists sync_installment_household_id_trigger on public.installme
 create trigger sync_installment_household_id_trigger
   before insert or update on public.installments
   for each row execute function public.sync_installment_household_id();
+
+-- Validar que account_id, counter_account_id, category_id e credit_card_id pertencem à mesma household em transactions
+create or replace function public.validate_transaction_household_id()
+returns trigger language plpgsql as $$
+declare
+  acc_h uuid;
+  counter_acc_h uuid;
+  cat_h uuid;
+  card_h uuid;
+begin
+  -- 1. Se account_id estiver preenchido, deve pertencer à mesma household_id
+  if new.account_id is not null then
+    select household_id into acc_h from public.accounts where id = new.account_id;
+    if acc_h is null or acc_h <> new.household_id then
+      raise exception 'ACCOUNT_HOUSEHOLD_MISMATCH: account_id % pertence a outra household ou não existe', new.account_id;
+    end if;
+  end if;
+
+  -- 2. Se counter_account_id estiver preenchido (transferência), deve pertencer à mesma household_id
+  if new.counter_account_id is not null then
+    select household_id into counter_acc_h from public.accounts where id = new.counter_account_id;
+    if counter_acc_h is null or counter_acc_h <> new.household_id then
+      raise exception 'COUNTER_ACCOUNT_HOUSEHOLD_MISMATCH: counter_account_id % pertence a outra household ou não existe', new.counter_account_id;
+    end if;
+  end if;
+
+  -- 3. Se category_id estiver preenchido, deve pertencer à mesma household_id
+  if new.category_id is not null then
+    select household_id into cat_h from public.categories where id = new.category_id;
+    if cat_h is null or cat_h <> new.household_id then
+      raise exception 'CATEGORY_HOUSEHOLD_MISMATCH: category_id % pertence a outra household ou não existe', new.category_id;
+    end if;
+  end if;
+
+  -- 4. Se credit_card_id estiver preenchido, deve pertencer à mesma household_id
+  if new.credit_card_id is not null then
+    select household_id into card_h from public.credit_cards where id = new.credit_card_id;
+    if card_h is null or card_h <> new.household_id then
+      raise exception 'CARD_HOUSEHOLD_MISMATCH: credit_card_id % pertence a outra household ou não existe', new.credit_card_id;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists validate_transaction_household_id_trigger on public.transactions;
+create trigger validate_transaction_household_id_trigger
+  before insert or update on public.transactions
+  for each row execute function public.validate_transaction_household_id();
 
 -- Triggers de set_updated_at
 do $$ begin
