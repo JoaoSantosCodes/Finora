@@ -23,9 +23,9 @@ _Atualizado após o UX Design e o redesign do V0._
 | 2. DB-001 Extensions | ✅ | Migração `0001_extensions.sql` validada via PGlite (idempotente, pgcrypto, 10 enums, trigger) |
 | 3. DB-002 Identity | ✅ | `profiles` validado via PGlite (email único case-insensitive, trigger, FK condicional com aviso) |
 | 4. DB-003 Household | ✅ | households/members/invitations; índice parcial "um owner" (4 bordas) + trigger de sync do owner_id |
-| 5. DB-004 RLS Foundation | ⏳ próximo | fail-closed + `is_household_member` |
-| 31. GATE 1 verify-prod | ⏳ | `verify-prod.mjs` verde contra o Supabase real (FK/RLS) — obrigatório para fechar o gate |
-| **GATE 1** | 🔒 | Libera após DB-003, DB-004 e verify-prod verde no banco real |
+| 5. DB-004 RLS Foundation | ✅ | FORCE + fail-closed + `is_household_member`/`has_household_role`; RLS em profiles; permissões por papel (convite owner/admin); validado via PGlite |
+| 31. GATE 1 verify-prod | ⏳ próximo | `verify-prod.mjs` verde contra o Supabase real (FK/RLS) — obrigatório para fechar o gate |
+| **GATE 1** | 🔒 | Falta: provisionar Supabase + verify-prod verde no banco real |
 
 ## Trabalho paralelo (V0 sempre funcional)
 
@@ -41,8 +41,8 @@ _Atualizado após o UX Design e o redesign do V0._
 
 ## Próximos passos sugeridos
 
-1. Rotacionar a secret key do Supabase.
-2. DB-003 (Household) — escrever e validar `0003_household.sql`.
-3. DB-004 (RLS Foundation).
-4. Provisionar Supabase, aplicar migrações e rodar `verify-prod.mjs` (GATE 1).
-5. CORE-001 (Financial Core completo) em paralelo à fundação de banco.
+1. Rotacionar a secret key do Supabase e o client secret do Google.
+2. Provisionar Supabase, aplicar migrações 0001–0004 e rodar `verify-prod.mjs` (GATE 1) — estender o script com FK, FORCE/RLS e A→B reais.
+3. Fechar GATE 1.
+4. CORE-001 (Financial Core completo) em paralelo à fundação de banco.
+5. DB-005 (Schema financeiro) após o GATE 1.

@@ -192,5 +192,104 @@ await db.query(`insert into household_members (household_id,profile_id,role) val
 const oh3 = (await db.query(`select owner_id from households where id=$1`, [h3])).rows[0].owner_id
 assert(oh3 === pC, 'owner_id de nova household sincronizado no INSERT de owner')
 
-console.log('\nTodos os checks passaram. Migrações DB-001, DB-002 e DB-003 válidas.')
-await db.close()
+console.log('8) DB-004 — RLS foundation (fail-closed, FORCE, membership):')
+
+// FORCE ativo em cada tabela (não só ENABLE): pg_class.relforcerowsecurity = true.
+for (const t of ['households', 'household_members', 'invitations']) {
+  const r = await db.query(
+    `select relrowsecurity as enabled, relforcerowsecurity as forced
+     from pg_class where relname = $1`,
+    [t],
+  )
+  assert(r.rows[0].enabled === true, `RLS ENABLE ativo em ${t}`)
+  assert(r.rows[0].forced === true, `RLS FORCE ativo em ${t} (nem o dono escapa)`)
+}
+
+// is_household_member() com entradas inválidas → sempre false, nunca erro.
+await db.query(`select set_config('app.current_user_id', '', false)`) // não autenticado
+const unauth = await db.query(`select is_household_member(gen_random_uuid()) as r`)
+assert(unauth.rows[0].r === false, 'is_household_member: auth.uid() nulo (não autenticado) → false')
+
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pA])
+const hInexist = await db.query(`select is_household_member(gen_random_uuid()) as r`)
+assert(hInexist.rows[0].r === false, 'is_household_member: household inexistente → false')
+
+await db.query(`select set_config('app.current_user_id', gen_random_uuid()::text, false)`)
+const pInexist = await db.query(`select is_household_member($1) as r`, [h1])
+assert(pInexist.rows[0].r === false, 'is_household_member: profile inexistente/não-membro → false')
+
+const hNull = await db.query(`select is_household_member(null) as r`)
+assert(hNull.rows[0].r === false, 'is_household_member: household null → false')
+
+// Role de teste NÃO-superusuário (superusuário ignora RLS). Precisa de USAGE no schema auth
+// para que auth.uid() seja acessível dentro das policies (no Supabase, isso é dado ao role
+// 'authenticated'; aqui é apenas o harness de teste).
+await db.query(`do $$ begin if not exists (select 1 from pg_roles where rolname='finora_test_user') then create role finora_test_user nologin; end if; end $$;`)
+await db.query(`grant usage on schema auth to finora_test_user`)
+await db.query(`grant execute on function auth.uid() to finora_test_user`)
+await db.query(`grant execute on function is_household_member(uuid) to finora_test_user`)
+
+// Fail-closed: tabela com RLS habilitado e SEM policy nega tudo (não "permite por acidente").
+await db.query(`create table if not exists rls_nopolicy_probe (id uuid primary key default gen_random_uuid(), v int)`)
+await db.query(`insert into rls_nopolicy_probe (v) values (1),(2)`)
+await db.query(`alter table rls_nopolicy_probe enable row level security`)
+await db.query(`alter table rls_nopolicy_probe force row level security`)
+await db.query(`grant select on rls_nopolicy_probe to finora_test_user`)
+await db.query(`set role finora_test_user`)
+const noPolicy = await db.query(`select count(*)::int as n from rls_nopolicy_probe`)
+assert(noPolicy.rows[0].n === 0, 'FAIL-CLOSED: RLS ligado sem policy → 0 linhas (nega tudo)')
+await db.query(`reset role`)
+
+// Teste A→B: usuário membro de h1 não enxerga registros de h3 (do qual não participa).
+await db.query(`grant select on households, household_members to finora_test_user`)
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pA]) // pA é membro de h1, não de h3
+const visiveis = await db.query(`select id from households`)
+const ids = visiveis.rows.map((r) => r.id)
+assert(ids.includes(h1), 'A→B: usuário vê a própria household (h1)')
+assert(!ids.includes(h3), 'A→B: usuário NÃO vê household de terceiros (h3)')
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
+console.log('9) DB-004 — permissões por papel (convite: owner/admin sim, member não):')
+// Cenário: h1 tem pB como owner (após transferência da BORDA 4) e pA como admin (rebaixado).
+// Cria um member puro (pM) em h1 para testar que member NÃO pode convidar.
+const pM = (await db.query(`insert into profiles (id,email) values (gen_random_uuid(),'m@f.app') returning id`)).rows[0].id
+await db.query(`insert into household_members (household_id,profile_id,role) values ($1,$2,'member')`, [h1, pM])
+
+await db.query(`grant insert, select on invitations to finora_test_user`)
+
+// member NÃO pode inserir convite (with check has_household_role owner/admin falha)
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pM])
+let memberBlocked = false
+try {
+  await db.query(`insert into invitations (household_id,email,role) values ($1,'novo@f.app','member')`, [h1])
+} catch { memberBlocked = true }
+assert(memberBlocked, 'member NÃO pode convidar (invitations_write exige owner/admin)')
+await db.query(`reset role`)
+
+// admin (pA) PODE inserir convite
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pA]) // pA é admin em h1
+await db.query(`insert into invitations (household_id,email,role) values ($1,'ok@f.app','member')`, [h1])
+const invCount = (await db.query(`select count(*)::int as n from invitations where household_id=$1`, [h1])).rows[0].n
+assert(invCount >= 1, 'admin PODE convidar (invitations_write aceita owner/admin)')
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
+console.log('10) DB-004 — RLS de profiles (cada um vê só o próprio):')
+for (const t of ['profiles']) {
+  const r = await db.query(`select relforcerowsecurity as forced from pg_class where relname=$1`, [t])
+  assert(r.rows[0].forced === true, `RLS FORCE ativo em ${t}`)
+}
+await db.query(`grant select on profiles to finora_test_user`)
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pA])
+const meus = await db.query(`select id from profiles`)
+const meusIds = meus.rows.map((r) => r.id)
+assert(meusIds.length === 1 && meusIds[0] === pA, 'profiles: usuário vê apenas o próprio profile')
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a DB-004 válidas.')

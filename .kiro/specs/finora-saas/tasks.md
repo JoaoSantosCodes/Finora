@@ -127,14 +127,14 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** invariante "um Owner por household" garantida no banco.
   - _Requirements: 4_
 
-- [ ] 5. DB-004 — Fundação de RLS (fail-closed) e helper de membership
+- [x] 5. DB-004 — Fundação de RLS (fail-closed) e helper de membership
   - **Objetivo:** estabelecer a base de segurança por household antes de qualquer dado financeiro.
   - **Contexto:** design.md §Data Models (RLS), §Authorization.
   - **Arquivos/módulos:** `supabase/migrations/0004_rls_foundation.sql`.
   - **Dependências:** DB-003.
-  - **Implementação:** função `is_household_member(uuid)` `security definer stable`; habilitar `ENABLE` + `FORCE ROW LEVEL SECURITY` em `households`, `household_members`, `invitations`; policies de select/write por membership; policies específicas de Owner para gestão de membros.
+  - **Implementação:** `is_household_member(uuid)` e `has_household_role(uuid, member_role[])` (`security definer stable`, `search_path` fixo); `ENABLE` + `FORCE ROW LEVEL SECURITY` em `households`, `household_members`, `invitations`, `profiles`; leitura por membership; escrita de gestão de membros/convites restrita a owner/admin (matriz de permissões); `profiles` restrito ao próprio usuário; stub condicional de `auth.uid()` (só onde o schema `auth` não existe).
   - **Critérios de aceitação:** sem policy → nenhum acesso; usuário A não lê household B; `is_household_member` sem recursão.
-  - **Testes:** testes negativos A→B; acesso negado com RLS mal configurado.
+  - **Testes:** validado via PGlite (role não-superusuário + GUC de sessão): FORCE ativo (não só ENABLE); fail-closed (sem policy → 0 linhas); `is_household_member` retorna false p/ entradas inválidas (uid nulo, household/profile inexistente, null); A→B; member não convida / admin convida; profiles self-only.
   - **DoD:** fundação fail-closed comprovada por teste.
   - _Requirements: 5, 21.3, 21.4 — valida Correctness Property 8_
 
