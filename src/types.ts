@@ -11,7 +11,11 @@ export interface Categoria {
   classificacao: Classificacao
 }
 
-// Uma despesa lançada (aba "Planilha Financeira - Orange")
+// Tipo de lançamento. 'transfer' fica reservado para quando houver contas (SaaS).
+export type TipoLancamento = 'despesa' | 'receita'
+
+// Um lançamento (evolução da "Despesa" do V0).
+// `tipo` é opcional para retrocompatibilidade: dados antigos sem tipo são tratados como 'despesa'.
 export interface Despesa {
   id: string
   descricao: string
@@ -21,6 +25,7 @@ export interface Despesa {
   parcelado: boolean
   parcelas: number // 1 = à vista
   pago: boolean
+  tipo?: TipoLancamento
 }
 
 // Estado completo persistido

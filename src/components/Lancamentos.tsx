@@ -11,6 +11,7 @@ export default function Lancamentos() {
   const { despesas, categorias, adicionarDespesa, removerDespesa, alternarPago } =
     useFinora()
 
+  const [tipo, setTipo] = useState<'despesa' | 'receita'>('despesa')
   const [descricao, setDescricao] = useState('')
   const [categoriaId, setCategoriaId] = useState(categorias[0]?.id ?? '')
   const [data, setData] = useState(hoje())
@@ -45,6 +46,7 @@ export default function Lancamentos() {
     setParcelas('1')
     setPago(false)
     setData(hoje())
+    setTipo('despesa')
   }
 
   function submeter(e: React.FormEvent) {
@@ -53,13 +55,14 @@ export default function Lancamentos() {
     if (!descricao.trim() || !categoriaId || !valorNum || valorNum <= 0) return
 
     adicionarDespesa({
+      tipo,
       descricao: descricao.trim(),
       categoriaId,
       data,
       valor: valorNum,
-      parcelado,
-      parcelas: parcelado ? Math.max(1, Number(parcelas)) : 1,
-      pago,
+      parcelado: tipo === 'despesa' ? parcelado : false,
+      parcelas: tipo === 'despesa' && parcelado ? Math.max(1, Number(parcelas)) : 1,
+      pago: tipo === 'receita' ? true : pago,
     })
     limpar()
   }
@@ -72,7 +75,29 @@ export default function Lancamentos() {
       </div>
 
       <form onSubmit={submeter} className="card p-5 grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-        <h2 className="md:col-span-2 font-semibold text-slate-800">Nova despesa</h2>
+        <div className="md:col-span-2 flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="font-semibold text-slate-800">Novo lançamento</h2>
+          <div className="inline-flex rounded-xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setTipo('despesa')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                tipo === 'despesa' ? 'bg-white text-expense-600 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              Despesa
+            </button>
+            <button
+              type="button"
+              onClick={() => setTipo('receita')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                tipo === 'receita' ? 'bg-white text-income-600 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              Receita
+            </button>
+          </div>
+        </div>
 
         <Campo label="Descrição">
           <input
@@ -119,36 +144,40 @@ export default function Lancamentos() {
         </Campo>
 
         <div className="md:col-span-2 flex flex-wrap items-center gap-6 pt-1">
-          <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-            <input
-              type="checkbox"
-              className="accent-brand-500 w-4 h-4"
-              checked={parcelado}
-              onChange={(e) => setParcelado(e.target.checked)}
-            />
-            Parcelado
-          </label>
-          {parcelado && (
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              Parcelas
-              <input
-                type="number"
-                min={1}
-                value={parcelas}
-                onChange={(e) => setParcelas(e.target.value)}
-                className="input w-20"
-              />
-            </label>
+          {tipo === 'despesa' && (
+            <>
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="accent-brand-500 w-4 h-4"
+                  checked={parcelado}
+                  onChange={(e) => setParcelado(e.target.checked)}
+                />
+                Parcelado
+              </label>
+              {parcelado && (
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  Parcelas
+                  <input
+                    type="number"
+                    min={1}
+                    value={parcelas}
+                    onChange={(e) => setParcelas(e.target.value)}
+                    className="input w-20"
+                  />
+                </label>
+              )}
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="accent-emerald-500 w-4 h-4"
+                  checked={pago}
+                  onChange={(e) => setPago(e.target.checked)}
+                />
+                Já pago
+              </label>
+            </>
           )}
-          <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-            <input
-              type="checkbox"
-              className="accent-emerald-500 w-4 h-4"
-              checked={pago}
-              onChange={(e) => setPago(e.target.checked)}
-            />
-            Já pago
-          </label>
 
           <button type="submit" className="btn-primary ml-auto">
             <IconPlus width={16} height={16} />

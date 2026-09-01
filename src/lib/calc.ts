@@ -34,12 +34,18 @@ function rotuloMes(mes: string): string {
   return `${MESES_ABREV[idx] ?? m}/${ano}`
 }
 
+// Trata lançamentos sem `tipo` (dados antigos) como despesa.
+export function ehReceita(d: Despesa): boolean {
+  return d.tipo === 'receita'
+}
+
 export function calcularIndicadores(despesas: Despesa[]): ResumoIndicadores {
   let totalGastos = 0
   let totalPago = 0
   let totalPendente = 0
 
   for (const d of despesas) {
+    if (ehReceita(d)) continue
     totalGastos += d.valor
     if (d.pago) totalPago += d.valor
     else totalPendente += d.valor
@@ -48,12 +54,35 @@ export function calcularIndicadores(despesas: Despesa[]): ResumoIndicadores {
   return { totalGastos, totalPago, totalPendente }
 }
 
+export interface ResumoFinanceiro {
+  saldo: number // receitas - despesas (efetivadas ou não, visão geral do período)
+  receitas: number
+  despesas: number
+  pendente: number
+}
+
+export function calcularResumoFinanceiro(despesas: Despesa[]): ResumoFinanceiro {
+  let receitas = 0
+  let desp = 0
+  let pendente = 0
+  for (const d of despesas) {
+    if (ehReceita(d)) {
+      receitas += d.valor
+    } else {
+      desp += d.valor
+      if (!d.pago) pendente += d.valor
+    }
+  }
+  return { saldo: receitas - desp, receitas, despesas: desp, pendente }
+}
+
 export function calcularPorCategoria(
   despesas: Despesa[],
   categorias: Categoria[],
 ): GastoPorCategoria[] {
   const mapa = new Map<string, number>()
   for (const d of despesas) {
+    if (ehReceita(d)) continue
     mapa.set(d.categoriaId, (mapa.get(d.categoriaId) ?? 0) + d.valor)
   }
 
@@ -71,12 +100,35 @@ export function calcularPorCategoria(
 export function calcularPorMes(despesas: Despesa[]): GastoPorMes[] {
   const mapa = new Map<string, number>()
   for (const d of despesas) {
+    if (ehReceita(d)) continue
     const mes = d.data.slice(0, 7) // YYYY-MM
     mapa.set(mes, (mapa.get(mes) ?? 0) + d.valor)
   }
 
   return Array.from(mapa.entries())
     .map(([mes, total]) => ({ mes, rotulo: rotuloMes(mes), total }))
+    .sort((a, b) => a.mes.localeCompare(b.mes))
+}
+
+export interface EvolucaoMes {
+  mes: string
+  rotulo: string
+  receitas: number
+  despesas: number
+}
+
+// Série mensal com receitas e despesas separadas (gráfico de evolução).
+export function calcularEvolucao(despesas: Despesa[]): EvolucaoMes[] {
+  const mapa = new Map<string, { receitas: number; despesas: number }>()
+  for (const d of despesas) {
+    const mes = d.data.slice(0, 7)
+    const acc = mapa.get(mes) ?? { receitas: 0, despesas: 0 }
+    if (ehReceita(d)) acc.receitas += d.valor
+    else acc.despesas += d.valor
+    mapa.set(mes, acc)
+  }
+  return Array.from(mapa.entries())
+    .map(([mes, v]) => ({ mes, rotulo: rotuloMes(mes), ...v }))
     .sort((a, b) => a.mes.localeCompare(b.mes))
 }
 
