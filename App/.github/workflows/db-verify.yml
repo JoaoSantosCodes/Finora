@@ -12,6 +12,7 @@ on:
 
 jobs:
   verify:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run_apply == false)
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -29,7 +30,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.run_apply == true
     runs-on: ubuntu-latest
     environment: production
-    needs: verify
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
