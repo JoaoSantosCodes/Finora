@@ -413,6 +413,13 @@ subscription.status + plan + ciclo  ──►  FeatureGate  ──►  entitleme
 
 Regra arquitetural: **nenhum componente do frontend nem Application Service decide disponibilidade de feature por conta própria.** Todos consultam o `FeatureGate` (`can(feature)` / `limit(resource)`). Isso evita lógica de plano espalhada e mantém uma única fonte de decisão (Req 18).
 
+**Dois eixos distintos (não confundir):**
+
+- **Direito por plano** (`FeatureGate` no `packages/core`): "o plano Pro tem direito a recorrências". Regra de negócio estável, muda raramente. Fiel à Matriz de Planos. Ex.: `canUse('pro','recurrences')` retorna `true` mesmo que a feature ainda não tenha sido construída — isso é correto, não é bug.
+- **Status de release** (camada de aplicação, ex.: `isReleased('recurrences')`): "recorrências já foi construído nesta versão". Muda a cada deploy. **Nunca** entra na Matriz de planos nem no `packages/core` (que deve permanecer estável e sem acoplamento a versão/fase). "Ainda não construído" é resolvido pela app não expor/chamar a feature, independentemente do que o gate responde.
+
+Misturar os dois eixos acoplaria o `packages/core` ao calendário de releases — exatamente o que a fitness function de pureza evita.
+
 ### Máquina de estados da Subscription
 
 ```mermaid

@@ -204,15 +204,15 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** acesso a dados seguro e transacional.
   - _Requirements: 5, 21.3_
 
-- [ ] 11. BILL-001 — Plans & FeatureGate (entitlement)
+- [x] 11. BILL-001 — Plans & FeatureGate (entitlement) — parte pura (core)
   - **Objetivo:** fonte única de decisão de disponibilidade/limite de recursos por plano.
-  - **Contexto:** design.md §Billing (Status × Entitlement).
-  - **Arquivos/módulos:** `src/core/entitlement.ts` (puro) + `api/billing/feature-gate.ts`.
-  - **Dependências:** DB-006.
-  - **Implementação:** mapear `subscription.status + plan + ciclo → entitlement`; API `can(feature)`/`limit(resource)`; carência/downgrade refletidos no entitlement.
-  - **Critérios de aceitação:** nenhuma decisão de plano fora do FeatureGate.
-  - **Testes:** matriz de planos → entitlement; estados trial/past_due/canceled.
-  - **DoD:** enforcement centralizado disponível para os serviços.
+  - **Contexto:** design.md §Billing (Status × Entitlement; dois eixos: direito por plano vs status de release).
+  - **Arquivos/módulos:** `packages/core/src/plans.ts` (Matriz como dados) + `packages/core/src/entitlement.ts` (decisões puras) + testes. A parte que mapeia `subscription.status → PlanId efetivo` (trial/past_due/canceled/ciclo) fica em BILL-002 (Application Service), pois depende de datas/estado.
+  - **Dependências:** Tarefa 1 (parte pura; independe de DB-006).
+  - **Implementação:** `canCreate(plan,resource,count)` (nega em `count >= limite`), `canUse(plan,feature)`, `exceedsLimit(plan,resource,count)` (nega em `count > limite`, pós-downgrade Req 17.8), `limitFor`, `hasFeature`, `reportHistoryMonths`. Puro, sem I/O. **Fronteira:** gate = direito por plano (estável, na Matriz); status de release = outra camada (app), nunca no core.
+  - **Critérios de aceitação:** nenhuma decisão de plano fora do FeatureGate; funções puras.
+  - **Testes:** 12 testes (unit + property-based) — invariante "nunca permite acima do limite" p/ qualquer plano/recurso/contagem; limites exatos; features por plano; coerência canCreate×exceedsLimit.
+  - **DoD:** enforcement centralizado (parte pura) disponível para os serviços.
   - _Requirements: 17, 18_
 
 - [ ] 12. API-002 — Application Services (parent: casos de uso por módulo)

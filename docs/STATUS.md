@@ -45,6 +45,7 @@ Depois de rotacionar, marcar os itens acima. As chaves antigas passam a não val
 | Redesign V0 (Financial OS) | ✅ | `da50edb` |
 | UX Design documentado | ✅ | `5432578` |
 | CORE-001 Financial Core (puro, 17 testes, property-based) | ✅ | — |
+| BILL-001 FeatureGate/entitlement — parte pura (core, 12 testes) | ✅ | — |
 
 ## Pendências e bloqueios
 
