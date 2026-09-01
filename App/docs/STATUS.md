@@ -37,7 +37,8 @@ Regra permanente: secrets nunca vão para o repositório (apenas `.env.example` 
 | 5. DB-004 RLS Foundation | ✅ | FORCE + fail-closed + `is_household_member`/`has_household_role`; RLS em profiles; permissões por papel (convite owner/admin); validado via PGlite |
 | 31. GATE 1 verify-prod | ✅ | `verify-prod.mjs` 100% verde no Supabase real (FK, RLS FORCE, 8 policies, owner index) |
 | **GATE 1** | ✅ | Concluído — Identity + Household + RLS Foundation validados em produção |
-| 6. DB-005 Schema Financeiro | ✅ | `0005_financial.sql` validado via PGlite (7 tabelas, RLS FORCE, denormalização household_id, CHECK XOR, categorias case-insensitive) |
+| 6. DB-005 Schema Financeiro | ✅ | `0005_financial.sql` validado no Supabase real (48/48 checks verdes via verify-prod.mjs) |
+| 7. DB-006 Schema Billing/Sync/Audit | ✅ | `0006_billing_sync_audit.sql` (Billing isolado, sync_mutations UNIQUE, audit_logs RLS imutável, seeds Free/Pro/Family) |
 
 ## Trabalho paralelo (V0 sempre funcional)
 

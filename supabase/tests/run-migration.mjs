@@ -375,4 +375,90 @@ assert(crossHouseholdBlocked, 'trigger validate_transaction_household_id bloquei
 await db.query(`reset role`)
 await db.query(`select set_config('app.current_user_id', '', false)`)
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a DB-005 válidas.')
+console.log('12) DB-006 — Schema de Billing, Sync & Audit (tabelas, RLS, imutabilidade e seeds):')
+const billingTables = ['plans', 'plan_features', 'subscriptions', 'subscription_events', 'sync_mutations', 'audit_logs']
+
+// 12.1 Verificar existência das tabelas
+for (const t of billingTables) {
+  const r = await db.query(`select 1 from pg_class where relname=$1 and relnamespace='public'::regnamespace`, [t])
+  assert(r.rows.length === 1, `tabela ${t} existe`)
+}
+
+// 12.2 Verificar RLS ENABLE + FORCE nas tabelas de tenant
+for (const t of ['subscriptions', 'subscription_events', 'sync_mutations', 'audit_logs']) {
+  const r = await db.query(`select relrowsecurity as enabled, relforcerowsecurity as forced from pg_class where relname=$1 and relnamespace='public'::regnamespace`, [t])
+  assert(r.rows[0].enabled === true, `RLS ENABLE ativo em ${t}`)
+  assert(r.rows[0].forced === true, `RLS FORCE ativo em ${t}`)
+}
+
+// 12.3 Verificar seeds dos planos
+const freePlan = (await db.query(`select id, price_cents from plans where id='free'`)).rows[0]
+assert(freePlan && Number(freePlan.price_cents) === 0, 'seed do plano Free existe')
+
+const proPlan = (await db.query(`select id, price_cents from plans where id='pro'`)).rows[0]
+assert(proPlan && Number(proPlan.price_cents) === 2990, 'seed do plano Pro existe')
+
+const familyPlan = (await db.query(`select id, price_cents from plans where id='family'`)).rows[0]
+assert(familyPlan && Number(familyPlan.price_cents) === 4990, 'seed do plano Família existe')
+
+const featCount = (await db.query(`select count(*)::int as n from plan_features`)).rows[0].n
+assert(featCount >= 15, 'seeds das plan_features foram inseridas com sucesso')
+
+// 12.4 Testar UNIQUE (plan_id, feature_key) em plan_features
+let featDuplicateBlocked = false
+try {
+  await db.query(`insert into plan_features (plan_id, feature_key, limit_value) values ('free', 'max_accounts', 5)`)
+} catch { featDuplicateBlocked = true }
+assert(featDuplicateBlocked, 'plan_features UNIQUE (plan_id, feature_key) rejeita chave duplicada')
+
+// 12.5 Testar UNIQUE (household_id, client_mutation_id) em sync_mutations
+await db.query(`insert into sync_mutations (household_id, client_mutation_id, result_ref) values ($1, 'MUT-001', 'OK')`, [h1])
+let syncDuplicateBlocked = false
+try {
+  await db.query(`insert into sync_mutations (household_id, client_mutation_id, result_ref) values ($1, 'MUT-001', 'OK')`, [h1])
+} catch { syncDuplicateBlocked = true }
+assert(syncDuplicateBlocked, 'sync_mutations UNIQUE (household_id, client_mutation_id) rejeita reenvio duplicado')
+
+// 12.6 Testar Imutabilidade Append-Only de audit_logs por RLS (UPDATE e DELETE retornam 0 linhas afetadas)
+// Inserir subscription e subscription_event via superuser (webhook/service_role)
+const sub1 = (await db.query(`insert into subscriptions (household_id, plan_id) values ($1, 'pro') returning id`, [h1])).rows[0].id
+
+// Testar que o trigger força a derivação imutável do household_id a partir do subscription_id
+const event1 = (await db.query(`insert into subscription_events (household_id, subscription_id, event_type) values ($1, $2, 'INVOICE_PAID') returning id, household_id`, [h3, sub1])).rows[0]
+assert(event1.household_id === h1, 'trigger sync_subscription_event_household_id sobrescreveu household_id de entrada e derivou de subscriptions.household_id')
+
+const auditId = (await db.query(`insert into audit_logs (household_id, actor_id, operation, entity) values ($1, $2, 'INSERT', 'transactions') returning id`, [h1, pM])).rows[0].id
+
+await db.query(`grant select, insert, update, delete on sync_mutations, audit_logs, subscriptions, subscription_events to finora_test_user`)
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pM]) // pM é member em h1
+
+// member PODE ler e inserir em audit_logs
+const auditRead = await db.query(`select id from audit_logs where id=$1`, [auditId])
+assert(auditRead.rows.length === 1, 'member PODE ler audit_logs do seu household')
+
+// member PODE ler subscription_events do seu household
+const subEvRead = await db.query(`select id from subscription_events where id=$1`, [event1.id])
+assert(subEvRead.rows.length === 1, 'member PODE ler subscription_events do seu household')
+
+// member NÃO PODE forjar inserção em subscription_events (eventos de cobrança são restritos a webhook/service_role)
+let subEvInsertBlocked = false
+try {
+  await db.query(`insert into subscription_events (subscription_id, event_type) values ($1, 'FAKE_PAID')`, [sub1])
+} catch { subEvInsertBlocked = true }
+assert(subEvInsertBlocked, 'member NÃO pode inserir subscription_events (restrito a webhook/service_role)')
+
+await db.query(`insert into audit_logs (household_id, actor_id, operation, entity) values ($1, $2, 'UPDATE', 'accounts')`, [h1, pM])
+
+// member NÃO PODE atualizar audit_logs (0 linhas afetadas por falta de policy de UPDATE + FORCE RLS)
+const auditUpd = await db.query(`update audit_logs set operation='HACKED' where id=$1`, [auditId])
+assert(auditUpd.rowCount === 0, 'audit_logs UPDATE por membro retorna 0 linhas afetadas (RLS imutável)')
+
+// member NÃO PODE deletar audit_logs (0 linhas afetadas por falta de policy de DELETE + FORCE RLS)
+const auditDel = await db.query(`delete from audit_logs where id=$1`, [auditId])
+assert(auditDel.rowCount === 0, 'audit_logs DELETE por membro retorna 0 linhas afetadas (RLS imutável)')
+
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a DB-006 válidas.')

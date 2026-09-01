@@ -142,6 +142,45 @@ try {
     const r = await client.query(`select 1 from pg_proc where proname = $1`, [fn])
     check(r.rows.length === 1, `DB-005: função de trigger ${fn}() existe`)
   }
+
+  // ── DB-006: Tabelas de Billing, Sync & Audit ──
+  const billingTables = ['plans', 'plan_features', 'subscriptions', 'subscription_events', 'sync_mutations', 'audit_logs']
+  for (const t of billingTables) {
+    const r = await client.query(
+      `select 1 from information_schema.tables where table_schema='public' and table_name=$1`,
+      [t],
+    )
+    check(r.rows.length === 1, `DB-006: tabela ${t} existe`)
+  }
+
+  // ── DB-006: RLS ENABLE + FORCE nas tabelas de tenant ──
+  for (const t of ['subscriptions', 'subscription_events', 'sync_mutations', 'audit_logs']) {
+    const r = await client.query(
+      `select relrowsecurity as enabled, relforcerowsecurity as forced
+       from pg_class where relname = $1 and relnamespace = 'public'::regnamespace`,
+      [t],
+    )
+    check(r.rows[0]?.enabled === true, `DB-006: RLS ENABLE ativo em ${t}`)
+    check(r.rows[0]?.forced === true, `DB-006: RLS FORCE ativo em ${t}`)
+  }
+
+  // ── DB-006: Policies de RLS em audit_logs (apenas select/insert, zero update/delete) ──
+  const auditPolicies = ['audit_logs_select', 'audit_logs_insert']
+  for (const pol of auditPolicies) {
+    const r = await client.query(
+      `select 1 from pg_policies where schemaname='public' and tablename='audit_logs' and policyname=$1`,
+      [pol],
+    )
+    check(r.rows.length === 1, `DB-006: policy ${pol} existe em audit_logs`)
+  }
+  const auditUpdDelPol = await client.query(
+    `select 1 from pg_policies where schemaname='public' and tablename='audit_logs' and cmd in ('UPDATE', 'DELETE')`,
+  )
+  check(auditUpdDelPol.rows.length === 0, 'DB-006: audit_logs tem ZERO políticas de UPDATE/DELETE (append-only imutável)')
+
+  // ── DB-006: Seeds de planos ──
+  const plansSeed = await client.query(`select count(*)::int as n from plans where id in ('free', 'pro', 'family')`)
+  check(plansSeed.rows[0]?.n === 3, 'DB-006: seeds dos 3 planos (free, pro, family) existem')
 } finally {
   await client.end()
 }
@@ -150,4 +189,4 @@ if (failures > 0) {
   console.error(`\n${failures} verificação(ões) falharam. Validação de produção NÃO passou.`)
   process.exit(1)
 }
-console.log('\nDB-005 & GATE 1: todas as verificações de produção passaram.')
+console.log('\nDB-006 & GATE 1: todas as verificações de produção passaram.')

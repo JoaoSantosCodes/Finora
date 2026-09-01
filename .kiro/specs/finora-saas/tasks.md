@@ -160,7 +160,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** schema financeiro íntegro e isolado.
   - _Requirements: 6, 7, 8, 9, 10, 11, 20_
 
-- [ ] 7. DB-006 — Schema de Billing (plans, plan_features, subscriptions, events) + sync/audit
+- [x] 7. DB-006 — Schema de Billing (plans, plan_features, subscriptions, events) + sync/audit
   - **Objetivo:** persistir billing como domínio separado e as tabelas transversais de sync/auditoria.
   - **Contexto:** design.md §Billing, §Offline/Sync, §Observability.
   - **Arquivos/módulos:** `supabase/migrations/0006_billing_sync_audit.sql`.
