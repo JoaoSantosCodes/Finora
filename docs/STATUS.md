@@ -4,6 +4,17 @@ Acompanhamento do progresso. A fonte de verdade das tarefas é [`.kiro/specs/fin
 
 _Atualizado após o UX Design e o redesign do V0._
 
+## 🔴 AÇÃO DE SEGURANÇA PENDENTE (fazer AGORA, ~10 min, fora do Kiro)
+
+Dois secrets foram expostos em chat e continuam potencialmente ativos. Rotacionar **não depende de código nem de provisionar o Supabase** — é ação manual nos painéis. Enquanto não for feito, há risco de credencial comprometida viva.
+
+- [ ] **Supabase secret key** — Dashboard → Project Settings → API Keys → secret key `default` → **Rotate/Regenerate**. Guardar a nova só em `.env.local` / config do Supabase.
+- [ ] **Google OAuth client secret** (`GOCSPX-...`) — Google Cloud Console → APIs & Services → Credentials → OAuth client → **Reset secret**. Guardar a nova só no Supabase (Auth → Providers → Google), nunca em arquivo.
+
+Depois de rotacionar, marcar os itens acima. As chaves antigas passam a não valer nada, zerando o risco da exposição.
+
+---
+
 ## Fase da especificação (concluída)
 
 | Etapa | Status | Artefato |
@@ -37,7 +48,7 @@ _Atualizado após o UX Design e o redesign do V0._
 
 ## Pendências e bloqueios
 
-- ⚠️ **Segurança:** a secret key do Supabase e o **client secret do Google OAuth** foram expostos em chat e precisam ser **rotacionados** antes de uso. Segredos vão apenas para as configs do Supabase / `.env.local`, nunca no repositório (`.gitignore` bloqueia `client_secret_*.json`).
+- ⚠️ **Segurança:** ver o item **AÇÃO DE SEGURANÇA PENDENTE** no topo deste arquivo (rotação dos dois secrets). O `.gitignore` já bloqueia `client_secret_*.json` e `.env*`.
 - ⏳ **Provisionar Supabase** e configurar `.env.local` (sem commitar) para aplicar migrações no ambiente real. Até lá, as migrações são validadas localmente via PGlite.
 
 ## Próximos passos sugeridos
