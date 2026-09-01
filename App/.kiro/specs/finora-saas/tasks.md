@@ -149,7 +149,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** fundação (Identity + Household + RLS) verificada no ambiente real, não só no PGlite.
   - _Requirements: 5, 21.3, 21.4_
 
-- [ ] 6. DB-005 — Schema Financeiro (accounts, categories, transactions, cards, invoices, installments)
+- [x] 6. DB-005 — Schema Financeiro (accounts, categories, transactions, cards, invoices, installments)
   - **Objetivo:** criar o núcleo de dados financeiros com dinheiro em centavos e RLS.
   - **Contexto:** design.md §Data Models (tabelas, constraints, índices), §Domain Model.
   - **Arquivos/módulos:** `supabase/migrations/0005_financial.sql`.

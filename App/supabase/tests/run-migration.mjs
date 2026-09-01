@@ -292,4 +292,76 @@ assert(meusIds.length === 1 && meusIds[0] === pA, 'profiles: usuário vê apenas
 await db.query(`reset role`)
 await db.query(`select set_config('app.current_user_id', '', false)`)
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a DB-004 válidas.')
+console.log('11) DB-005 — Schema Financeiro (7 tabelas, RLS FORCE, constraints, triggers e permissões):')
+const finTables = ['accounts', 'categories', 'credit_cards', 'credit_card_invoices', 'installment_plans', 'transactions', 'installments']
+
+// 11.1 Verificação de existência e RLS ENABLE + FORCE nas 7 tabelas
+for (const t of finTables) {
+  const r = await db.query(`select relrowsecurity as enabled, relforcerowsecurity as forced from pg_class where relname=$1 and relnamespace='public'::regnamespace`, [t])
+  assert(r.rows.length === 1, `tabela ${t} existe`)
+  assert(r.rows[0].enabled === true, `RLS ENABLE ativo em ${t}`)
+  assert(r.rows[0].forced === true, `RLS FORCE ativo em ${t}`)
+}
+
+// 11.2 Testar triggers de sincronização de household_id em credit_card_invoices e installments
+const acc1 = (await db.query(`insert into accounts (household_id, name, type) values ($1, 'Conta Corrente', 'checking') returning id`, [h1])).rows[0].id
+const cat1 = (await db.query(`insert into categories (household_id, name, classification) values ($1, 'Mercado', 'Variável') returning id`, [h1])).rows[0].id
+const card1 = (await db.query(`insert into credit_cards (household_id, name, credit_limit_cents, closing_day, due_day) values ($1, 'Cartão Itaú', 500000, 20, 30) returning id`, [h1])).rows[0].id
+
+const inv1 = (await db.query(`insert into credit_card_invoices (credit_card_id, cycle, due_date) values ($1, '2026-09-01', '2026-09-30') returning id, household_id`, [card1])).rows[0]
+assert(inv1.household_id === h1, 'trigger sync_invoice_household_id preencheu household_id em credit_card_invoices')
+
+const plan1 = (await db.query(`insert into installment_plans (household_id, total_amount_cents, installments_count) values ($1, 120000, 12) returning id`, [h1])).rows[0].id
+
+const inst1 = (await db.query(`insert into installments (installment_plan_id, number, amount_cents, accrual_date, invoice_id) values ($1, 1, 10000, '2026-09-01', $2) returning id, household_id`, [plan1, inv1.id])).rows[0]
+assert(inst1.household_id === h1, 'trigger sync_installment_household_id preencheu household_id em installments via invoice_id')
+
+// 11.3 Testar CHECK constraints
+// CHECK XOR em installments (não pode ter invoice_id e transaction_id simultaneamente, nem ambos nulos)
+let xorBlocked = false
+try {
+  await db.query(`insert into installments (household_id, installment_plan_id, number, amount_cents, accrual_date) values ($1, $2, 2, 10000, '2026-09-01')`, [h1, plan1])
+} catch { xorBlocked = true }
+assert(xorBlocked, 'installments CHECK XOR rejeita parcela sem invoice_id nem transaction_id')
+
+// CHECK de transferência (type = transfer exige counter_account_id <> account_id; non-transfer exige counter_account_id nulo)
+let transferBlocked = false
+try {
+  await db.query(`insert into transactions (household_id, type, amount_cents, account_id, accrual_date) values ($1, 'transfer', 5000, $2, '2026-09-01')`, [h1, acc1])
+} catch { transferBlocked = true }
+assert(transferBlocked, 'transactions CHECK de transferência rejeita type transfer sem counter_account_id')
+
+// 11.4 Testar índices únicos (case-insensitive em categories e external_ref por conta)
+let catCaseBlocked = false
+try {
+  await db.query(`insert into categories (household_id, name) values ($1, 'mercado')`, [h1])
+} catch { catCaseBlocked = true }
+assert(catCaseBlocked, 'categories índice único case-insensitive rejeita "mercado" duplicado')
+
+const tx1 = (await db.query(`insert into transactions (household_id, type, amount_cents, account_id, accrual_date, external_ref) values ($1, 'expense', 1500, $2, '2026-09-01', 'EXT-100') returning id`, [h1, acc1])).rows[0].id
+assert(tx1 !== null, 'transação com external_ref inserida com sucesso')
+
+let extRefBlocked = false
+try {
+  await db.query(`insert into transactions (household_id, type, amount_cents, account_id, accrual_date, external_ref) values ($1, 'expense', 2000, $2, '2026-09-01', 'EXT-100')`, [h1, acc1])
+} catch { extRefBlocked = true }
+assert(extRefBlocked, 'transactions external_ref duplicado na mesma conta é rejeitado')
+
+// 11.5 Testar permissões por papel (member pode criar/editar lançamentos, mas NÃO pode deletar accounts)
+await db.query(`grant select, insert, update, delete on accounts, categories, credit_cards, credit_card_invoices, installment_plans, transactions, installments to finora_test_user`)
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pM]) // pM é member em h1
+
+// member PODE criar lançamento
+await db.query(`insert into transactions (household_id, type, amount_cents, account_id, accrual_date) values ($1, 'expense', 500, $2, '2026-09-01')`, [h1, acc1])
+const txMemberCount = (await db.query(`select count(*)::int as n from transactions where household_id=$1`, [h1])).rows[0].n
+assert(txMemberCount >= 2, 'member PODE criar lançamento no orçamento compartilhado')
+
+// member NÃO pode deletar conta bancária (accounts_delete exige owner/admin -> 0 linhas afetadas por RLS)
+const delRes = await db.query(`delete from accounts where id=$1`, [acc1])
+assert(delRes.rowCount === 0, 'member NÃO pode deletar conta bancária (0 linhas afetadas por RLS)')
+
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a DB-005 válidas.')
