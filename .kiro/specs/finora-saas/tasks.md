@@ -116,14 +116,14 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** identidade persistida e única.
   - _Requirements: 1, 3_
 
-- [ ] 4. DB-003 — Schema de Household (households, members, invitations)
+- [x] 4. DB-003 — Schema de Household (households, members, invitations)
   - **Objetivo:** modelar grupo familiar, membros e convites.
   - **Contexto:** design.md §Domain Model (Household).
   - **Arquivos/módulos:** `supabase/migrations/0003_household.sql`.
   - **Dependências:** DB-002.
-  - **Implementação:** `households`, `household_members` (PK composta, `role`), `invitations` (`status`, `expires_at`); índice único parcial `UNIQUE (household_id) WHERE role='owner'`; FKs com `on delete cascade` a partir de household.
+  - **Implementação:** `households` (`owner_id → profiles` on delete restrict), `household_members` (PK composta, `role`, FKs cascade), `invitations` (`status`, `expires_at` default +7d); índice único parcial `household_one_owner (household_id) WHERE role='owner'`; trigger `sync_household_owner` mantém `households.owner_id` consistente com o owner real.
   - **Critérios de aceitação:** impossível ter dois owners na mesma household; convite expira por `expires_at`.
-  - **Testes:** violação de dois owners é rejeitada; cardinalidades corretas.
+  - **Testes:** validado via PGlite — teste negativo de "um owner" com 4 bordas (INSERT, promoção via UPDATE, owner em outra household, transferência) + sincronização de `owner_id`.
   - **DoD:** invariante "um Owner por household" garantida no banco.
   - _Requirements: 4_
 

@@ -22,8 +22,8 @@ _Atualizado após o UX Design e o redesign do V0._
 | 1. FOUNDATION | ✅ | Monorepo, boundaries, Financial Core puro (`packages/core`) |
 | 2. DB-001 Extensions | ✅ | Migração `0001_extensions.sql` validada via PGlite (idempotente, pgcrypto, 10 enums, trigger) |
 | 3. DB-002 Identity | ✅ | `profiles` validado via PGlite (email único case-insensitive, trigger, FK condicional com aviso) |
-| 4. DB-003 Household | ⏳ próximo | households, members, invitations |
-| 5. DB-004 RLS Foundation | ⏳ | fail-closed + `is_household_member` |
+| 4. DB-003 Household | ✅ | households/members/invitations; índice parcial "um owner" (4 bordas) + trigger de sync do owner_id |
+| 5. DB-004 RLS Foundation | ⏳ próximo | fail-closed + `is_household_member` |
 | 31. GATE 1 verify-prod | ⏳ | `verify-prod.mjs` verde contra o Supabase real (FK/RLS) — obrigatório para fechar o gate |
 | **GATE 1** | 🔒 | Libera após DB-003, DB-004 e verify-prod verde no banco real |
 
@@ -36,7 +36,7 @@ _Atualizado após o UX Design e o redesign do V0._
 
 ## Pendências e bloqueios
 
-- ⚠️ **Segurança:** a secret key do Supabase foi exposta em chat e precisa ser **rotacionada** antes de conectar o projeto.
+- ⚠️ **Segurança:** a secret key do Supabase e o **client secret do Google OAuth** foram expostos em chat e precisam ser **rotacionados** antes de uso. Segredos vão apenas para as configs do Supabase / `.env.local`, nunca no repositório (`.gitignore` bloqueia `client_secret_*.json`).
 - ⏳ **Provisionar Supabase** e configurar `.env.local` (sem commitar) para aplicar migrações no ambiente real. Até lá, as migrações são validadas localmente via PGlite.
 
 ## Próximos passos sugeridos

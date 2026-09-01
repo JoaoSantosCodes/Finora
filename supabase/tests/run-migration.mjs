@@ -100,5 +100,97 @@ assert(dupBlocked, 'e-mail duplicado (case-insensitive) é rejeitado')
 const trg = await db.query(`select 1 from pg_trigger where tgname = 'profiles_set_updated_at'`)
 assert(trg.rows.length === 1, 'trigger profiles_set_updated_at existe')
 
-console.log('\nTodos os checks passaram. Migrações DB-001 e DB-002 válidas.')
+console.log('5) DB-003 — households, members, invitations:')
+for (const t of ['households', 'household_members', 'invitations']) {
+  const r = await db.query(
+    `select 1 from information_schema.tables where table_schema='public' and table_name=$1`,
+    [t],
+  )
+  assert(r.rows.length === 1, `tabela ${t} existe`)
+}
+
+// base_currency default 'BRL'
+const bc = await db.query(
+  `select column_default from information_schema.columns
+   where table_name='households' and column_name='base_currency'`,
+)
+assert(bc.rows[0].column_default?.includes('BRL'), "households.base_currency default 'BRL'")
+
+// índice único parcial de owner
+const oi = await db.query(`select 1 from pg_indexes where indexname='household_one_owner'`)
+assert(oi.rows.length === 1, 'índice household_one_owner existe')
+
+// PK composta de household_members
+const pk = await db.query(
+  `select count(*)::int as n from information_schema.key_column_usage
+   where constraint_name = (
+     select constraint_name from information_schema.table_constraints
+     where table_name='household_members' and constraint_type='PRIMARY KEY'
+   )`,
+)
+assert(pk.rows[0].n === 2, 'household_members tem PK composta (2 colunas)')
+
+// invitations.expires_at tem default (+7 dias)
+const inv = await db.query(
+  `select column_default from information_schema.columns
+   where table_name='invitations' and column_name='expires_at'`,
+)
+assert(!!inv.rows[0].column_default, 'invitations.expires_at tem default (+7 dias)')
+
+console.log('6) DB-003 — TESTE NEGATIVO: invariante "um Owner por household":')
+
+// Fixtures: 2 profiles + 1 household
+const pA = (await db.query(`insert into profiles (id,email) values (gen_random_uuid(),'a@f.app') returning id`)).rows[0].id
+const pB = (await db.query(`insert into profiles (id,email) values (gen_random_uuid(),'b@f.app') returning id`)).rows[0].id
+const h1 = (await db.query(`insert into households (name) values ('Casa 1') returning id`)).rows[0].id
+
+// Caso base: primeiro owner é aceito
+await db.query(`insert into household_members (household_id,profile_id,role) values ($1,$2,'owner')`, [h1, pA])
+console.log('  ok — primeiro owner inserido')
+
+// Borda 1: segundo owner via INSERT deve ser REJEITADO
+let b1 = false
+try {
+  await db.query(`insert into household_members (household_id,profile_id,role) values ($1,$2,'owner')`, [h1, pB])
+} catch { b1 = true }
+assert(b1, 'BORDA 1: segundo owner via INSERT é rejeitado')
+
+// Borda 2: promover 2º membro (member) a owner via UPDATE deve ser REJEITADO
+await db.query(`insert into household_members (household_id,profile_id,role) values ($1,$2,'member')`, [h1, pB])
+let b2 = false
+try {
+  await db.query(`update household_members set role='owner' where household_id=$1 and profile_id=$2`, [h1, pB])
+} catch { b2 = true }
+assert(b2, 'BORDA 2: promover 2º membro a owner via UPDATE é rejeitado')
+
+// Borda 3: owner em household DIFERENTE é PERMITIDO (parcial é por household_id)
+const h2 = (await db.query(`insert into households (name) values ('Casa 2') returning id`)).rows[0].id
+await db.query(`insert into household_members (household_id,profile_id,role) values ($1,$2,'owner')`, [h2, pB])
+const owners2 = await db.query(`select count(*)::int as n from household_members where household_id=$1 and role='owner'`, [h2])
+assert(owners2.rows[0].n === 1, 'BORDA 3: owner em outra household é permitido')
+
+// Borda 4: transferência bem-feita (rebaixa antes de promover) mantém 1 owner
+await db.query(`update household_members set role='admin' where household_id=$1 and profile_id=$2`, [h1, pA])
+await db.query(`update household_members set role='owner' where household_id=$1 and profile_id=$2`, [h1, pB])
+const owners1 = await db.query(`select count(*)::int as n from household_members where household_id=$1 and role='owner'`, [h1])
+assert(owners1.rows[0].n === 1, 'BORDA 4: transferência (rebaixa→promove) mantém exatamente 1 owner')
+
+console.log('7) DB-003 — sincronização de households.owner_id (trigger):')
+
+// Após a promoção inicial, h2.owner_id deve apontar para pB (foi inserido owner em BORDA 3).
+const oh2 = (await db.query(`select owner_id from households where id=$1`, [h2])).rows[0].owner_id
+assert(oh2 === pB, 'owner_id de h2 sincronizado no INSERT de owner')
+
+// Após a transferência em h1 (BORDA 4: A→admin, B→owner), h1.owner_id deve ser pB.
+const oh1 = (await db.query(`select owner_id from households where id=$1`, [h1])).rows[0].owner_id
+assert(oh1 === pB, 'owner_id de h1 sincronizado após transferência (via UPDATE)')
+
+// Novo owner via INSERT em household nova sincroniza owner_id.
+const pC = (await db.query(`insert into profiles (id,email) values (gen_random_uuid(),'c@f.app') returning id`)).rows[0].id
+const h3 = (await db.query(`insert into households (name) values ('Casa 3') returning id`)).rows[0].id
+await db.query(`insert into household_members (household_id,profile_id,role) values ($1,$2,'owner')`, [h3, pC])
+const oh3 = (await db.query(`select owner_id from households where id=$1`, [h3])).rows[0].owner_id
+assert(oh3 === pC, 'owner_id de nova household sincronizado no INSERT de owner')
+
+console.log('\nTodos os checks passaram. Migrações DB-001, DB-002 e DB-003 válidas.')
 await db.close()
