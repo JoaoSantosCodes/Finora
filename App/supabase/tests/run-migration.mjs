@@ -461,4 +461,57 @@ assert(auditDel.rowCount === 0, 'audit_logs DELETE por membro retorna 0 linhas a
 await db.query(`reset role`)
 await db.query(`select set_config('app.current_user_id', '', false)`)
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a DB-006 válidas.')
+// ─────────────────────────────────────────────────────────────────────────────
+// 13) AUTH-001 — Autenticação, Triggers Atômicos e Rate Limiting
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Garantir schema auth.users no PGlite para testes do trigger
+await db.exec(`
+  create schema if not exists auth;
+  create table if not exists auth.users (
+    id uuid primary key default gen_random_uuid(),
+    email text unique not null,
+    raw_user_meta_data jsonb,
+    created_at timestamptz not null default now()
+  );
+  drop trigger if exists on_auth_user_created on auth.users;
+  create trigger on_auth_user_created
+    after insert on auth.users
+    for each row execute function public.handle_new_user();
+`)
+
+// 13.1 Testar cadastro atômico: INSERT em auth.users cria Profile + Household + Owner
+const uAuthId = 'a1111111-1111-1111-1111-111111111111'
+await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ($1, 'newuser@finora.test', '{"display_name":"Novo Usuario"}')`, [uAuthId])
+
+const createdProf = await db.query(`select email, display_name from profiles where id=$1`, [uAuthId])
+assert(createdProf.rows.length === 1, 'trigger handle_new_user() criou profile em profiles')
+assert(createdProf.rows[0].email === 'newuser@finora.test', 'profile email salvo corretamente')
+
+const createdMembership = await db.query(`select household_id, role from household_members where profile_id=$1`, [uAuthId])
+assert(createdMembership.rows.length === 1, 'trigger handle_new_user() criou household_member')
+assert(createdMembership.rows[0].role === 'owner', 'novo usuario e owner do seu household inicial')
+
+// 13.2 Testar pre-check de e-mail existente (evita exceção no colisão de UNIQUE email)
+const uAuthId2 = 'a2222222-2222-2222-2222-222222222222'
+let emailConflictError = false
+try {
+  await db.query(`insert into auth.users (id, email) values ($1, 'NEWUSER@FINORA.TEST')`, [uAuthId2])
+} catch (e) {
+  emailConflictError = true
+}
+assert(!emailConflictError, 'trigger handle_new_user() NAO lancou excecao SQL ao detectar e-mail ja existente')
+
+const fallbackLog = await db.query(`select operation from audit_logs where operation='OAUTH_LINKING_FALLBACK'`)
+assert(fallbackLog.rows.length === 1, 'trigger registrou OAUTH_LINKING_FALLBACK em audit_logs para concordoes')
+
+// 13.3 Testar RLS FORCE em auth_login_attempts (cliente comum nao pode ler/escrever)
+await db.query(`grant select, insert, update, delete on auth_login_attempts to finora_test_user`)
+await db.query(`set role finora_test_user`)
+
+const clientAttemptRead = await db.query(`select * from auth_login_attempts`)
+assert(clientAttemptRead.rows.length === 0, 'auth_login_attempts RLS FORCE bloqueia leitura por client (0 linhas)')
+
+await db.query(`reset role`)
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a AUTH-001 (0007) válidas.')

@@ -181,6 +181,23 @@ try {
   // ── DB-006: Seeds de planos ──
   const plansSeed = await client.query(`select count(*)::int as n from plans where id in ('free', 'pro', 'family')`)
   check(plansSeed.rows[0]?.n === 3, 'DB-006: seeds dos 3 planos (free, pro, family) existem')
+
+  // ── AUTH-001: Função de trigger atômico e RLS de login attempts ──
+  const fnAuth = await client.query(`select 1 from pg_proc where proname = 'handle_new_user'`)
+  check(fnAuth.rows.length === 1, 'AUTH-001: função de trigger handle_new_user() existe')
+
+  const tAttempts = await client.query(`select 1 from information_schema.tables where table_schema='public' and table_name='auth_login_attempts'`)
+  check(tAttempts.rows.length === 1, 'AUTH-001: tabela auth_login_attempts existe')
+
+  const rlsAttempts = await client.query(
+    `select relrowsecurity as enabled, relforcerowsecurity as forced
+     from pg_class where relname = 'auth_login_attempts' and relnamespace = 'public'::regnamespace`,
+  )
+  check(rlsAttempts.rows[0]?.enabled === true, 'AUTH-001: RLS ENABLE ativo em auth_login_attempts')
+  check(rlsAttempts.rows[0]?.forced === true, 'AUTH-001: RLS FORCE ativo em auth_login_attempts')
+
+  const polAttempts = await client.query(`select 1 from pg_policies where schemaname='public' and tablename='auth_login_attempts'`)
+  check(polAttempts.rows.length === 0, 'AUTH-001: auth_login_attempts tem ZERO políticas de client (acesso exclusivo service_role)')
 } finally {
   await client.end()
 }
@@ -189,4 +206,4 @@ if (failures > 0) {
   console.error(`\n${failures} verificação(ões) falharam. Validação de produção NÃO passou.`)
   process.exit(1)
 }
-console.log('\nDB-006 & GATE 1: todas as verificações de produção passaram.')
+console.log('\nAUTH-001 & GATE 1: todas as verificações de produção passaram.')

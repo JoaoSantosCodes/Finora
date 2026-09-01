@@ -182,7 +182,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** Core cobre as invariantes e passa nos testes de propriedade.
   - _Requirements: 8, 9, 10, 11, 15 — valida Correctness Properties 1–4, 6_
 
-- [ ] 9. AUTH-001 — Integração de autenticação (email/senha + Google, sessões)
+- [x] 9. AUTH-001 — Integração de autenticação (email/senha + Google, sessões)
   - **Objetivo:** habilitar login/cadastro, OAuth Google, reset e sessão de 24h, fluindo `auth.uid()` para o RLS.
   - **Contexto:** design.md §Authentication.
   - **Arquivos/módulos:** `src/data/auth.ts`, config do provedor (Supabase Auth), `api/auth/*` (rotas finas).
