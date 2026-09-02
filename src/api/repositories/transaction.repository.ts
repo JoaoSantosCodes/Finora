@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { SupabaseClient } from '@supabase/supabase-js'
-import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors'
+import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors.ts'
 
 export interface TransactionRecord {
   id?: string
@@ -34,7 +34,11 @@ export interface TransactionFilter {
 }
 
 export class TransactionRepository {
-  constructor(private readonly db: SupabaseClient) {}
+  private readonly db: SupabaseClient
+
+  constructor(db: SupabaseClient) {
+    this.db = db
+  }
 
   async findById(id: string): Promise<TransactionRecord | null> {
     const { data, error } = await this.db.from('transactions').select('*').eq('id', id).single()
@@ -97,8 +101,8 @@ export class TransactionRepository {
   }
 
   /**
-    * Executa transferência entre contas via RPC atômica SECURITY INVOKER no Postgres
-    */
+   * Executa transferência entre contas via RPC atômica SECURITY INVOKER no Postgres
+   */
   async transfer(params: {
     householdId: string
     sourceAccountId: string
@@ -121,8 +125,8 @@ export class TransactionRepository {
   }
 
   /**
-    * Executa criação de lançamento parcelado via RPC atômica SECURITY INVOKER no Postgres
-    */
+   * Executa criação de lançamento parcelado via RPC atômica SECURITY INVOKER no Postgres
+   */
   async createInstallmentPlan(params: {
     householdId: string
     accountId: string
@@ -150,8 +154,8 @@ export class TransactionRepository {
   }
 
   /**
-    * Executa exclusão física de transação com auditoria atômica via RPC SECURITY INVOKER
-    */
+   * Executa exclusão física de transação com auditoria atômica via RPC SECURITY INVOKER
+   */
   async delete(id: string): Promise<void> {
     const { error } = await this.db.rpc('rpc_delete_transaction_with_audit', {
       p_transaction_id: id,

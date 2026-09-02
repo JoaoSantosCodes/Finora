@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { SupabaseClient } from '@supabase/supabase-js'
-import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors'
+import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors.ts'
 
 export interface CreditCardRecord {
   id?: string
@@ -26,7 +26,11 @@ export interface CreditCardInvoiceRecord {
 }
 
 export class CreditCardRepository {
-  constructor(private readonly db: SupabaseClient) {}
+  private readonly db: SupabaseClient
+
+  constructor(db: SupabaseClient) {
+    this.db = db
+  }
 
   async findById(id: string): Promise<CreditCardRecord | null> {
     const { data, error } = await this.db.from('credit_cards').select('*').eq('id', id).single()

@@ -22,7 +22,37 @@ export class NotFoundError extends DomainError {
 }
 
 export class DatabaseError extends DomainError {
-  constructor(message: string, public readonly originalError?: unknown) {
+  readonly originalError?: unknown
+
+  constructor(message: string, originalError?: unknown) {
+    super(message)
+    this.originalError = originalError
+  }
+}
+
+export class ValidationError extends DomainError {
+  constructor(message = 'Dados de entrada inválidos.') {
+    super(message)
+  }
+}
+
+export class PlanLimitExceededError extends DomainError {
+  readonly resource: string
+  readonly limit: number
+
+  constructor(
+    resource: string,
+    limit: number,
+    message = `Limite do plano atingido para o recurso "${resource}" (máximo: ${limit}). Upgrade necessário.`
+  ) {
+    super(message)
+    this.resource = resource
+    this.limit = limit
+  }
+}
+
+export class AccountHasTransactionsError extends DomainError {
+  constructor(message = 'Não é possível excluir conta com lançamentos associados. Arquive a conta em vez de excluí-la.') {
     super(message)
   }
 }

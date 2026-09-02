@@ -605,4 +605,7 @@ assert(post0008Txs.rows.length > 0, 'REGRESSÃO RLS: membro comum lê transaçõ
 await db.query(`reset role`)
 await db.query(`select set_config('app.current_user_id', '', false)`)
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008) válidas.')
+const { runAccountServiceTests } = await import('../../src/api/services/account.service.pure.ts')
+await runAccountServiceTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008) e API-002A (Account Service) válidas.')

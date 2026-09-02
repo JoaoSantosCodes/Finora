@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { SupabaseClient } from '@supabase/supabase-js'
-import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors'
+import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors.ts'
 
 export interface AccountRecord {
   id?: string
@@ -17,7 +17,11 @@ export interface AccountRecord {
 }
 
 export class AccountRepository {
-  constructor(private readonly db: SupabaseClient) {}
+  private readonly db: SupabaseClient
+
+  constructor(db: SupabaseClient) {
+    this.db = db
+  }
 
   async findById(id: string): Promise<AccountRecord | null> {
     const { data, error } = await this.db.from('accounts').select('*').eq('id', id).single()
@@ -82,6 +86,23 @@ export class AccountRepository {
       const existing = await this.findById(id)
       if (existing) {
         throw new PermissionDeniedError('Permissão negada pelo RLS para arquivar esta conta.')
+      }
+      throw new NotFoundError(`Conta id ${id} não encontrada.`)
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    const { data, count, error } = await this.db
+      .from('accounts')
+      .delete({ count: 'exact' })
+      .eq('id', id)
+      .select('*')
+
+    if (error) throw new DatabaseError('Erro ao excluir conta', error)
+    if (count === 0 || !data || data.length === 0) {
+      const existing = await this.findById(id)
+      if (existing) {
+        throw new PermissionDeniedError('Permissão negada pelo RLS para excluir esta conta.')
       }
       throw new NotFoundError(`Conta id ${id} não encontrada.`)
     }

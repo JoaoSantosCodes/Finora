@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { SupabaseClient } from '@supabase/supabase-js'
-import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors'
+import { DatabaseError, NotFoundError, PermissionDeniedError } from '../errors.ts'
 
 export interface CategoryRecord {
   id?: string
@@ -17,7 +17,11 @@ export interface CategoryRecord {
 }
 
 export class CategoryRepository {
-  constructor(private readonly db: SupabaseClient) {}
+  private readonly db: SupabaseClient
+
+  constructor(db: SupabaseClient) {
+    this.db = db
+  }
 
   async findById(id: string): Promise<CategoryRecord | null> {
     const { data, error } = await this.db.from('categories').select('*').eq('id', id).single()

@@ -193,7 +193,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** identidade autenticada disponível para os Application Services.
   - _Requirements: 1, 2, 3, 21.5, 21.6_
 
-- [ ] 10. API-001 — Repository Foundation (acesso a dados sob RLS)
+- [x] 10. API-001 — Repository Foundation (acesso a dados sob RLS)
   - **Objetivo:** camada de repositório que executa como o usuário (respeitando RLS) com transações de banco.
   - **Contexto:** design.md §Components and Interfaces.
   - **Arquivos/módulos:** `api/repositories/*`, `api/db/client.ts`.
@@ -225,7 +225,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** API MVP funcional e autorizada, com testes por domínio.
   - _Requirements: 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 17, 18, 23.5, 8.8_
 
-- [ ] 12.1 API-002A — Account Service
+- [x] 12.1 API-002A — Account Service
   - **Objetivo:** CRUD de contas, arquivamento, saldo; enforcement de limite de contas.
   - **Arquivos/módulos:** `api/services/accounts.ts`, `api/v1/accounts`.
   - **Dependências:** API-002 (parent).
