@@ -260,7 +260,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** total = soma dos itens; fechamento no closing_day; pagamento reflete no saldo.
   - _Requirements: 10 — valida Correctness Property 4_
 
-- [ ] 12.6 API-002F — Installment Service
+- [x] 12.6 API-002F — Installment Service
   - **Objetivo:** parcelamento com distribuição exata em centavos.
   - **Arquivos/módulos:** `api/services/installments.ts`.
   - **Dependências:** API-002E.

@@ -1,8 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// BARREL PÚBLICO DOS SERVIÇOS DA APLICAÇÃO (API-002)
+// VITEST WRAPPER PARA OS TESTES DO INSTALLMENT SERVICE (API-002D)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export * from './account.service.ts'
-export * from './transaction.service.ts'
-export * from './transfer.service.ts'
-export * from './installment.service.ts'
+import { describe, it } from 'vitest'
+import { runInstallmentServiceTests } from './installment.service.pure.ts'
+
+describe('InstallmentService (API-002D)', () => {
+  it('executa os 5 testes do InstallmentService com sucesso', async () => {
+    await runInstallmentServiceTests()
+  })
+})
