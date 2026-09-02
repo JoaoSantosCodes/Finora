@@ -592,4 +592,17 @@ assert(anonRpcBlocked, 'HARDENING: papel anon/public é impedido de executar RPC
 
 await db.query(`reset role`)
 
+// 14.5 REGRESSÃO: Membro comum autenticado executa SELECT em RLS após migração 0008
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pM]) // pM é membro em h1
+
+const post0008Households = await db.query(`select id, name from households where id = $1`, [h1])
+assert(post0008Households.rows.length === 1 && post0008Households.rows[0].id === h1, 'REGRESSÃO RLS: membro comum lê a própria household via is_household_member() após migração 0008')
+
+const post0008Txs = await db.query(`select id from transactions where household_id = $1`, [h1])
+assert(post0008Txs.rows.length > 0, 'REGRESSÃO RLS: membro comum lê transações do seu household via is_household_member() após migração 0008')
+
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
 console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008) válidas.')
