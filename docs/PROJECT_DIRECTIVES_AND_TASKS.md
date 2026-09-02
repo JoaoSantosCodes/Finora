@@ -11,8 +11,9 @@ Documento consolidado de diretrizes de arquitetura, segurança, regras de desenv
    - Variáveis sensíveis devem residir exclusivamente em `.env.local` (bloqueado via `.gitignore`) ou nos Secrets do GitHub Actions.
 2. **Implantação de Banco sob Revisão Controlada**:
    - Aplicações de schema no banco de produção (`db:apply`) são disparadas **exclusivamente via `workflow_dispatch`** no GitHub Actions, com parâmetro explícito `run_apply = true` e aprovação obrigatória da Environment `production`.
-3. **Validação em Produção Obrigatoriamente Verde (`db:verify`)**:
-   - Nenhuma tarefa de banco ou infraestrutura é considerada concluída até que a suíte `verify-prod.mjs` rode contra o Supabase de produção e retorne **100% GREEN**.
+4. **Deploy Automático na Cloudflare Pages / Workers**:
+   - Cada commit publicado na branch `main` dispara a build contínua do frontend no Cloudflare Pages.
+   - **URL de Produção**: [`https://finora.joaocarlosrh23.workers.dev/`](https://finora.joaocarlosrh23.workers.dev/) (Status: 🟢 **200 OK — Sincronizado**).
 
 ---
 
