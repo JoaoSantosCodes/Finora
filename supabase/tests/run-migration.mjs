@@ -608,4 +608,7 @@ await db.query(`select set_config('app.current_user_id', '', false)`)
 const { runAccountServiceTests } = await import('../../src/api/services/account.service.pure.ts')
 await runAccountServiceTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008) e API-002A (Account Service) válidas.')
+const { runTransactionServiceTests } = await import('../../src/api/services/transaction.service.pure.ts')
+await runTransactionServiceTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A (Account Service) e API-002B (Transaction Service) válidas.')

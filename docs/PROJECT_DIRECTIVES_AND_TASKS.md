@@ -94,7 +94,7 @@ Documento consolidado de diretrizes de arquitetura, segurança, regras de desenv
 | ID | Subtarefa / Serviço | Status | Descrição & Escopo |
 |---|---|---|---|
 | 13 | **API-002A Account Service** | ✅ Concluído | CRUD de contas, arquivamento (`archived = true`), recálculo de saldo via Financial Core e limite do plano via FeatureGate (`canCreate`). |
-| 14 | **API-002B Transaction Service** | ⏳ Pendente | Receitas/Despesas com competência, status `paid/pending` e recálculo. |
+| 14 | **API-002B Transaction Service** | ✅ Concluído | Receitas/Despesas com validação `amountCents > 0`, datas de competência, alternância `paid`/`pending` e exclusão atômica com auditoria. |
 | 15 | **API-002C Transfer Service** | ⏳ Pendente | Orquestração de transferências entre contas via `rpc_transfer_funds`. |
 | 16 | **API-002D Installment Service** | ⏳ Pendente | Parcelamentos e geração de séries via `rpc_create_installment_transaction`. |
 | 17 | **API-002E CreditCard Service** | ⏳ Pendente | Cartões de crédito, fechamento e pagamento de faturas. |

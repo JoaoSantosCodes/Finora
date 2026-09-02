@@ -232,7 +232,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** conta com transações não é excluída (arquiva); limite via FeatureGate.
   - _Requirements: 6, 18_
 
-- [ ] 12.2 API-002B — Transaction Service (income/expense)
+- [x] 12.2 API-002B — Transaction Service (income/expense)
   - **Objetivo:** criar/editar/excluir receitas e despesas com competência e status de pagamento.
   - **Arquivos/módulos:** `api/services/transactions.ts`, `api/v1/transactions`.
   - **Dependências:** API-002 (parent).
