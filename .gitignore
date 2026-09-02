@@ -17,3 +17,8 @@ client_secret_*.json
 *service-account*.json
 *.pem
 *.key
+
+# Ignore local Windows Junction / Symlink folder App
+App/
+App
+
