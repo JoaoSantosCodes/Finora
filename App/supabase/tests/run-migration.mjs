@@ -8,6 +8,7 @@ import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto'
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { accountBalance } from '../../packages/core/src/transactions.ts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const migrationsDir = join(__dirname, '..', 'migrations')
@@ -41,7 +42,11 @@ async function applyAll(label) {
   console.log(`   ${label}: ${files.join(', ')}`)
 }
 
-console.log('1) Aplicando todas as migrações pela primeira vez...')
+console.log('1) Configurando papéis do harness e aplicando migrações pela primeira vez...')
+await db.exec(`
+  do $$ begin create role authenticated; exception when duplicate_object then null; end $$;
+  do $$ begin create role anon; exception when duplicate_object then null; end $$;
+`)
 await applyAll('aplicadas')
 
 console.log('2) Reaplicando (idempotência)...')
@@ -429,6 +434,7 @@ assert(event1.household_id === h1, 'trigger sync_subscription_event_household_id
 
 const auditId = (await db.query(`insert into audit_logs (household_id, actor_id, operation, entity) values ($1, $2, 'INSERT', 'transactions') returning id`, [h1, pM])).rows[0].id
 
+await db.query(`grant authenticated to finora_test_user`)
 await db.query(`grant select, insert, update, delete on sync_mutations, audit_logs, subscriptions, subscription_events to finora_test_user`)
 await db.query(`set role finora_test_user`)
 await db.query(`select set_config('app.current_user_id', $1, false)`, [pM]) // pM é member em h1
@@ -514,4 +520,76 @@ assert(clientAttemptRead.rows.length === 0, 'auth_login_attempts RLS FORCE bloqu
 
 await db.query(`reset role`)
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a AUTH-001 (0007) válidas.')
+// ─────────────────────────────────────────────────────────────────────────────
+// 14) API-001 — Repository Foundation, RPCs Atômicas & Security Hardening
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 14.1 Teste de rpc_transfer_funds com falha (rollback atômico)
+const accSource = (await db.query(`insert into accounts (household_id, name, type, initial_balance_cents) values ($1, 'Conta Origem', 'checking', 100000) returning id`, [h1])).rows[0].id
+const accDestOther = (await db.query(`insert into accounts (household_id, name, type, initial_balance_cents) values ($1, 'Conta Invasora', 'checking', 50000) returning id`, [h3])).rows[0].id
+
+await db.query(`set role finora_test_user`)
+await db.query(`select set_config('app.current_user_id', $1, false)`, [pM]) // pM é member em h1
+
+// Tentativa de transferir da conta h1 para a conta h3 (deve falhar por RLS / validação de household)
+let transferFailed = false
+try {
+  await db.query(`select rpc_transfer_funds($1, $2, $3, 10000, '2026-09-01'::date, 'Transferência Ilegal')`, [h1, accSource, accDestOther])
+} catch (e) {
+  transferFailed = true
+}
+assert(transferFailed, 'rpc_transfer_funds bloqueou e lançou exceção ao tentar transferir para conta de outro household')
+
+// Confirmar que nenhuma transação foi criada (rollback atômico)
+const txOrphan = await db.query(`select id from transactions where account_id=$1`, [accSource])
+assert(txOrphan.rows.length === 0, 'ROLLBACK ATÔMICO: conta origem não gerou transação parcial')
+
+// 14.1.2 Teste de atualização correta dos saldos de ambos os lados da transferência (origem e destino)
+const accTargetLocal = (await db.query(`insert into accounts (household_id, name, type, initial_balance_cents) values ($1, 'Conta Destino Válida', 'checking', 20000) returning id`, [h1])).rows[0].id
+
+const transferOkRes = (await db.query(`select rpc_transfer_funds($1, $2, $3, 30000, '2026-09-01'::date, 'Transferência Válida') as res`, [h1, accSource, accTargetLocal])).rows[0].res
+assert(transferOkRes.success === true, 'rpc_transfer_funds executou transferência legítima entre contas da mesma household')
+
+// Buscar transações para calcular saldo via Financial Core accountBalance()
+const allTxsRows = (await db.query(`select id, type, amount_cents as "amountCents", account_id as "accountId", counter_account_id as "counterAccountId", payment_status as "paymentStatus", accrual_date as "accrualDate" from transactions where household_id=$1`, [h1])).rows
+
+const sourceBalance = accountBalance({ id: accSource, initialBalanceCents: 100000 }, allTxsRows)
+const targetBalance = accountBalance({ id: accTargetLocal, initialBalanceCents: 20000 }, allTxsRows)
+
+assert(sourceBalance === 70000, 'CONSERVAÇÃO DE SALDO: conta de origem foi debitada em 30.000 (100.000 -> 70.000)')
+assert(targetBalance === 50000, 'CONSERVAÇÃO DE SALDO: conta de destino foi creditada em 30.000 (20.000 -> 50.000)')
+
+// 14.2 Teste de rpc_create_installment_transaction (criação atômica de plano + parcelas)
+const cat1Rpc = (await db.query(`select id from categories where household_id=$1 limit 1`, [h1])).rows[0].id
+const rpcInstRes = (await db.query(`select rpc_create_installment_transaction($1, $2, $3, 30000, 3, '2026-09-01'::date, 'Notebook 3x') as res`, [h1, accSource, cat1Rpc])).rows[0].res
+assert(rpcInstRes.success === true, 'rpc_create_installment_transaction criou parcelamento com sucesso')
+
+const instCount = await db.query(`select count(*)::int as n from installments where installment_plan_id=$1`, [rpcInstRes.installment_plan_id])
+assert(instCount.rows[0].n === 3, '3 parcelas foram criadas atomicamente em installments')
+
+// 14.3 Teste de rpc_delete_transaction_with_audit (deleção e auditoria em 1 transação)
+const delResRpc = (await db.query(`select rpc_delete_transaction_with_audit($1) as res`, [rpcInstRes.transaction_id])).rows[0].res
+assert(delResRpc.success === true, 'rpc_delete_transaction_with_audit executou com sucesso')
+
+const deletedTxCheck = await db.query(`select id from transactions where id=$1`, [rpcInstRes.transaction_id])
+assert(deletedTxCheck.rows.length === 0, 'transação foi excluída do banco')
+
+const auditDelCheck = await db.query(`select operation from audit_logs where metadata->>'transaction_id' = $1`, [rpcInstRes.transaction_id])
+assert(auditDelCheck.rows.length === 1 && auditDelCheck.rows[0].operation === 'DELETE', 'registro DELETE foi inserido em audit_logs na mesma transação')
+
+// 14.4 Teste de Hardening: Usuário não-autenticado (anon) NÃO pode executar RPCs
+await db.query(`reset role`)
+await db.query(`select set_config('app.current_user_id', '', false)`)
+
+let anonRpcBlocked = false
+try {
+  await db.query(`set role anon`)
+  await db.query(`select rpc_transfer_funds($1, $2, $3, 1000, '2026-09-01'::date, 'Anon Test')`, [h1, accSource, accSource])
+} catch {
+  anonRpcBlocked = true
+}
+assert(anonRpcBlocked, 'HARDENING: papel anon/public é impedido de executar RPCs por falta de GRANT')
+
+await db.query(`reset role`)
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008) válidas.')

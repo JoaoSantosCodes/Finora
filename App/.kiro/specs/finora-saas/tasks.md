@@ -193,7 +193,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** identidade autenticada disponível para os Application Services.
   - _Requirements: 1, 2, 3, 21.5, 21.6_
 
-- [ ] 10. API-001 — Repository Foundation (acesso a dados sob RLS)
+- [x] 10. API-001 — Repository Foundation (acesso a dados sob RLS)
   - **Objetivo:** camada de repositório que executa como o usuário (respeitando RLS) com transações de banco.
   - **Contexto:** design.md §Components and Interfaces.
   - **Arquivos/módulos:** `api/repositories/*`, `api/db/client.ts`.

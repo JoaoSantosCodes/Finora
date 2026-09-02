@@ -198,6 +198,13 @@ try {
 
   const polAttempts = await client.query(`select 1 from pg_policies where schemaname='public' and tablename='auth_login_attempts'`)
   check(polAttempts.rows.length === 0, 'AUTH-001: auth_login_attempts tem ZERO políticas de client (acesso exclusivo service_role)')
+
+  // ── API-001: Funções RPC atômicas com hardening ──
+  const expectedRpcs = ['rpc_transfer_funds', 'rpc_create_installment_transaction', 'rpc_delete_transaction_with_audit']
+  for (const fn of expectedRpcs) {
+    const r = await client.query(`select 1 from pg_proc where proname = $1`, [fn])
+    check(r.rows.length === 1, `API-001: função RPC ${fn}() existe`)
+  }
 } finally {
   await client.end()
 }
@@ -206,4 +213,4 @@ if (failures > 0) {
   console.error(`\n${failures} verificação(ões) falharam. Validação de produção NÃO passou.`)
   process.exit(1)
 }
-console.log('\nAUTH-001 & GATE 1: todas as verificações de produção passaram.')
+console.log('\nAPI-001 & GATE 1: todas as verificações de produção passaram.')
