@@ -1,9 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// BARREL PÚBLICO DOS SERVIÇOS DA APLICAÇÃO (API-002)
+// VITEST WRAPPER PARA OS TESTES DO CREDIT CARD SERVICE (API-002E)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export * from './account.service.ts'
-export * from './transaction.service.ts'
-export * from './transfer.service.ts'
-export * from './installment.service.ts'
-export * from './credit_card.service.ts'
+import { describe, it } from 'vitest'
+import { runCreditCardServiceTests } from './credit_card.service.pure.ts'
+
+describe('CreditCardService (API-002E)', () => {
+  it('executa os 5 testes do CreditCardService com sucesso', async () => {
+    await runCreditCardServiceTests()
+  })
+})

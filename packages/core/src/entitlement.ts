@@ -7,7 +7,7 @@ import {
   type CountedResource,
   type FeatureFlag,
   type Limit,
-} from './plans'
+} from './plans.ts'
 
 export interface GateDecision {
   allowed: boolean

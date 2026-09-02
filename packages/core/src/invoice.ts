@@ -24,6 +24,17 @@ export function invoiceCycle(accrualDate: string, closingDay: number): string {
   return `${year}-${String(month).padStart(2, '0')}-01`
 }
 
+/**
+ * Deriva a data de vencimento da fatura dado o ciclo (YYYY-MM ou YYYY-MM-01) e o dia de vencimento do cartão.
+ */
+export function invoiceDueDate(cycle: string, dueDay: number): string {
+  const parts = cycle.split('-')
+  const year = parts[0]
+  const month = parts[1]
+  const dayStr = String(dueDay).padStart(2, '0')
+  return `${year}-${month}-${dayStr}`
+}
+
 export interface InvoiceItem {
   amountCents: Cents
   accrualDate: string

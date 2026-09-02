@@ -246,7 +246,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** origem≠destino; não afeta totais de receita/despesa.
   - _Requirements: 8.3, 8.4, 15.4 — valida Correctness Property 1_
 
-- [ ] 12.4 API-002D — Credit Card Service
+- [x] 12.4 API-002D — Credit Card Service
   - **Objetivo:** CRUD de cartões com limite/fechamento/vencimento.
   - **Arquivos/módulos:** `api/services/cards.ts`, `api/v1/credit-cards`.
   - **Dependências:** API-002 (parent).
