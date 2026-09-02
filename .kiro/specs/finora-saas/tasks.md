@@ -239,7 +239,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** `amount_cents>0`; recálculo de saldo; alternância paid/pending.
   - _Requirements: 8, 9_
 
-- [ ] 12.3 API-002C — Transfer Service
+- [x] 12.3 API-002C — Transfer Service
   - **Objetivo:** movimentação entre contas (não é receita nem despesa).
   - **Arquivos/módulos:** `api/services/transfers.ts` (ou parte de transactions).
   - **Dependências:** API-002B.

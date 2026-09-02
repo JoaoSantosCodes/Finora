@@ -611,4 +611,7 @@ await runAccountServiceTests()
 const { runTransactionServiceTests } = await import('../../src/api/services/transaction.service.pure.ts')
 await runTransactionServiceTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A (Account Service) e API-002B (Transaction Service) válidas.')
+const { runTransferServiceTests } = await import('../../src/api/services/transfer.service.pure.ts')
+await runTransferServiceTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A (Account Service), API-002B (Transaction Service) e API-002C (Transfer Service) válidas.')

@@ -1,7 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// BARREL PÚBLICO DOS SERVIÇOS DA APLICAÇÃO (API-002)
+// VITEST WRAPPER PARA OS TESTES DO TRANSFER SERVICE (API-002C)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export * from './account.service.ts'
-export * from './transaction.service.ts'
-export * from './transfer.service.ts'
+import { describe, it } from 'vitest'
+import { runTransferServiceTests } from './transfer.service.pure.ts'
+
+describe('TransferService (API-002C)', () => {
+  it('executa os 5 testes do TransferService com sucesso', async () => {
+    await runTransferServiceTests()
+  })
+})
