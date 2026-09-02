@@ -40,6 +40,7 @@ Regra permanente: secrets nunca vão para o repositório (apenas `.env.example` 
 | 6. DB-005 Schema Financeiro | ✅ | `0005_financial.sql` validado no Supabase real (48/48 checks verdes via verify-prod.mjs) |
 | 7. DB-006 Schema Billing/Sync/Audit | ✅ | `0006_billing_sync_audit.sql` (Billing isolado, sync_mutations UNIQUE, audit_logs RLS imutável, seeds Free/Pro/Family) |
 | 9. AUTH-001 Integração Auth | ✅ | `0007_auth_triggers.sql` (Trigger atômico handle_new_user, auth_login_attempts RLS FORCE, detectUnlinkedSession) |
+| 10. API-001 Repository Foundation | ✅ | `0008_api_rpc_functions.sql` (Repositórios sob RLS, RPCs atômicas com hardening, count exact, rollback provado) |
 
 ## Trabalho paralelo (V0 sempre funcional)
 
