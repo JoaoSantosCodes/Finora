@@ -14,9 +14,11 @@ const Cartoes = lazy(() => import('./components/Cartoes'))
 const Faturas = lazy(() => import('./components/Faturas'))
 const Orcamentos = lazy(() => import('./components/Orcamentos'))
 const Metas = lazy(() => import('./components/Metas'))
+const Relatorios = lazy(() => import('./components/Relatorios'))
+const Insights = lazy(() => import('./components/Insights'))
 const Configuracoes = lazy(() => import('./components/Configuracoes'))
 
-type Aba = 'dashboard' | 'lancamentos' | 'contas' | 'cartoes' | 'faturas' | 'orcamentos' | 'metas' | 'configuracoes'
+type Aba = 'dashboard' | 'lancamentos' | 'contas' | 'cartoes' | 'faturas' | 'orcamentos' | 'metas' | 'relatorios' | 'insights' | 'configuracoes'
 
 interface NavItem {
   id: Aba
@@ -24,12 +26,12 @@ interface NavItem {
   Icon: typeof IconDashboard
 }
 
-// Itens funcionais hoje. Os demais módulos aparecem como "Em breve".
+// Todos os módulos estão ativos e desbloqueados.
 const navPrincipal: NavItem[] = [
   { id: 'dashboard', label: 'Visão geral', Icon: IconDashboard },
 ]
 
-const grupos: { titulo: string; itens: { label: string; ativo?: Aba }[] }[] = [
+const grupos: { titulo: string; itens: { label: string; ativo: Aba }[] }[] = [
   {
     titulo: 'Financeiro',
     itens: [
@@ -41,11 +43,17 @@ const grupos: { titulo: string; itens: { label: string; ativo?: Aba }[] }[] = [
   },
   {
     titulo: 'Planejamento',
-    itens: [{ label: 'Orçamentos', ativo: 'orcamentos' }, { label: 'Metas', ativo: 'metas' }],
+    itens: [
+      { label: 'Orçamentos', ativo: 'orcamentos' },
+      { label: 'Metas', ativo: 'metas' },
+    ],
   },
   {
     titulo: 'Análises',
-    itens: [{ label: 'Relatórios' }, { label: 'Insights' }],
+    itens: [
+      { label: 'Relatórios', ativo: 'relatorios' },
+      { label: 'Insights', ativo: 'insights' },
+    ],
   },
 ]
 
@@ -129,6 +137,8 @@ export default function App() {
                 {aba === 'faturas' && <Faturas />}
                 {aba === 'orcamentos' && <Orcamentos />}
                 {aba === 'metas' && <Metas />}
+                {aba === 'relatorios' && <Relatorios />}
+                {aba === 'insights' && <Insights />}
                 {aba === 'configuracoes' && <Configuracoes />}
               </div>
             </Suspense>

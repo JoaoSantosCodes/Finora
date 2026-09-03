@@ -378,14 +378,14 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** contribuições; progresso; conclusão.
   - _Requirements: 14, 18_
 
-- [ ] 17.6 WEB-004F — Dashboard (ligado ao Analytics migrado)
-  - **Arquivos/módulos:** `src/ui/Dashboard.tsx` (consolida WEB-003).
+- [x] 17.6 WEB-004F — Dashboard, Relatórios e Insights (Analytics)
+  - **Arquivos/módulos:** `src/components/Dashboard.tsx`, `src/components/Relatorios.tsx`, `src/components/Insights.tsx`.
   - **Dependências:** WEB-004 (parent), WEB-003, API-002J.
-  - **Critérios de aceitação:** indicadores do backend; filtro de mês com feedback.
+  - **Critérios de aceitação:** indicadores do backend; filtro de mês; exportação CSV/JSON.
   - _Requirements: 15, 23.1_
 
-- [ ] 17.7 WEB-004G — Configurações (Settings: categorias, perfil, household)
-  - **Arquivos/módulos:** `src/ui/Configuracoes.tsx`, `useCategories`, `useHousehold`.
+- [x] 17.7 WEB-004G — Configurações (Settings: categorias, perfil, household)
+  - **Arquivos/módulos:** `src/components/Configuracoes.tsx`, `useCategories`, `useHousehold`.
   - **Dependências:** WEB-004 (parent), API-002.
   - **Critérios de aceitação:** categorias com substituição na exclusão; gestão de membros por papel.
   - _Requirements: 3, 4, 7_
