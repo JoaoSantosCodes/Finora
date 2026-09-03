@@ -253,7 +253,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** dias 1–31; despesa que excede limite registra e sinaliza.
   - _Requirements: 10_
 
-- [ ] 12.5 API-002E — Invoice Service
+- [x] 12.5 API-002F — Category Service
   - **Objetivo:** faturas por ciclo, total derivado, fechamento e pagamento.
   - **Arquivos/módulos:** `api/services/invoices.ts`, `api/v1/invoices`.
   - **Dependências:** API-002D.

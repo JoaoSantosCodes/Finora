@@ -1,10 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// BARREL PÚBLICO DOS SERVIÇOS DA APLICAÇÃO (API-002)
+// VITEST WRAPPER PARA OS TESTES DO CATEGORY SERVICE (API-002F)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export * from './account.service.ts'
-export * from './transaction.service.ts'
-export * from './transfer.service.ts'
-export * from './installment.service.ts'
-export * from './credit_card.service.ts'
-export * from './category.service.ts'
+import { describe, it } from 'vitest'
+import { runCategoryServiceTests } from './category.service.pure.ts'
+
+describe('CategoryService (API-002F)', () => {
+  it('executa os 5 testes do CategoryService com sucesso', async () => {
+    await runCategoryServiceTests()
+  })
+})

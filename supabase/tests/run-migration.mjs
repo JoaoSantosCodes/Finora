@@ -620,4 +620,7 @@ await runInstallmentServiceTests()
 const { runCreditCardServiceTests } = await import('../../src/api/services/credit_card.service.pure.ts')
 await runCreditCardServiceTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A, API-002B, API-002C, API-002D e API-002E (CreditCard Service) válidas.')
+const { runCategoryServiceTests } = await import('../../src/api/services/category.service.pure.ts')
+await runCategoryServiceTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A, API-002B, API-002C, API-002D, API-002E e API-002F (Category Service) válidas.')
