@@ -366,7 +366,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** faturas por ciclo; despesa parcelada; total derivado.
   - _Requirements: 10, 11_
 
-- [ ] 17.4 WEB-004D — Orçamentos (Budgets) [V1.2]
+- [x] 17.4 WEB-004D — Orçamentos (Budgets) [V1.2]
   - **Arquivos/módulos:** `src/ui/Orcamentos.tsx`, `useBudgets`.
   - **Dependências:** WEB-004 (parent), API-002H.
   - **Critérios de aceitação:** gate de plano; alertas de consumo.

@@ -644,4 +644,7 @@ await runContasModuleTests()
 const { runCartoesModuleTests } = await import('../../src/components/Cartoes.pure.ts')
 await runCartoesModuleTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001, WEB-001/002, BILL-002, JOB-001 e FASE 6A/6B (Módulos de Contas, Cartões e Faturas) válidas.')
+const { runOrcamentosModuleTests } = await import('../../src/components/Orcamentos.pure.ts')
+await runOrcamentosModuleTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001, WEB-001/002, BILL-002, JOB-001 e FASE 6A/6B/6C (Módulos de Contas, Cartões, Faturas e Orçamentos) válidas.')
