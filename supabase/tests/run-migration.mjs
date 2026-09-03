@@ -629,4 +629,7 @@ await runAnalyticsServiceTests()
 const { runSyncEngineTests } = await import('../../src/api/sync/sync_engine.pure.ts')
 await runSyncEngineTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J e SYNC-001 (Sync Engine) válidas.')
+const { runStoreIntegrationTests } = await import('../../src/store.pure.ts')
+await runStoreIntegrationTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001 e WEB-001/002 (Store Integration) válidas.')

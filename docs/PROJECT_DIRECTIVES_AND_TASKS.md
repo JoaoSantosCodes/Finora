@@ -108,7 +108,7 @@ Documento consolidado de diretrizes de arquitetura, segurança, regras de desenv
 | ID | Tarefa / Módulo | Status | Descrição & Escopo |
 |---|---|---|---|
 | 19 | **SYNC-001 Sync Engine** | ✅ Concluído | Sincronização offline-first com fila idempotente em `sync_mutations`, `client_mutation_id` e resolução de conflitos. |
-| 20 | **WEB-001 App Frontend** | ⏳ Pendente | Interface React (Financial OS V0), navegação por módulos e sincronização. |
+| 20 | **WEB-001 App Frontend** | ✅ Concluído | Interface React integrada ao `SyncEngine` com suporte offline-first, persistência híbrida e retrocompatibilidade com UI V0. |
 | 21 | **BILL-002 Billing Webhooks** | ⏳ Pendente | Integração Stripe/webhooks para gerenciamento de assinaturas e upgrade/downgrade. |
 
 ---

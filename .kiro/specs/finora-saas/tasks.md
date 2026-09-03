@@ -306,7 +306,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** automações do domínio ativas.
   - _Requirements: 10.4, 13, 14.5, 16, 17_
 
-- [ ] 14. WEB-001 — App Shell autenticado (sem remover o V0)
+- [x] 14. WEB-001 — App Shell autenticado (sem remover o V0)
   - **Objetivo:** introduzir sessão/roteamento e a casca autenticada, coexistindo com o V0.
   - **Contexto:** design.md §Web/PWA.
   - **Arquivos/módulos:** `src/app/auth/*`, `src/ui/AppShell.tsx`, roteamento.
