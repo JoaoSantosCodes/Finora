@@ -372,7 +372,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** gate de plano; alertas de consumo.
   - _Requirements: 13, 18_
 
-- [ ] 17.5 WEB-004E — Metas (Goals)
+- [x] 17.5 WEB-004E — Metas (Goals)
   - **Arquivos/módulos:** `src/ui/Metas.tsx`, `useGoals`.
   - **Dependências:** WEB-004 (parent), API-002I.
   - **Critérios de aceitação:** contribuições; progresso; conclusão.

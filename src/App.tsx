@@ -13,9 +13,10 @@ const Contas = lazy(() => import('./components/Contas'))
 const Cartoes = lazy(() => import('./components/Cartoes'))
 const Faturas = lazy(() => import('./components/Faturas'))
 const Orcamentos = lazy(() => import('./components/Orcamentos'))
+const Metas = lazy(() => import('./components/Metas'))
 const Configuracoes = lazy(() => import('./components/Configuracoes'))
 
-type Aba = 'dashboard' | 'lancamentos' | 'contas' | 'cartoes' | 'faturas' | 'orcamentos' | 'configuracoes'
+type Aba = 'dashboard' | 'lancamentos' | 'contas' | 'cartoes' | 'faturas' | 'orcamentos' | 'metas' | 'configuracoes'
 
 interface NavItem {
   id: Aba
@@ -40,7 +41,7 @@ const grupos: { titulo: string; itens: { label: string; ativo?: Aba }[] }[] = [
   },
   {
     titulo: 'Planejamento',
-    itens: [{ label: 'Orçamentos', ativo: 'orcamentos' }, { label: 'Metas' }],
+    itens: [{ label: 'Orçamentos', ativo: 'orcamentos' }, { label: 'Metas', ativo: 'metas' }],
   },
   {
     titulo: 'Análises',
@@ -127,6 +128,7 @@ export default function App() {
                 {aba === 'cartoes' && <Cartoes />}
                 {aba === 'faturas' && <Faturas />}
                 {aba === 'orcamentos' && <Orcamentos />}
+                {aba === 'metas' && <Metas />}
                 {aba === 'configuracoes' && <Configuracoes />}
               </div>
             </Suspense>
