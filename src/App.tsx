@@ -7,6 +7,9 @@ import {
   IconWallet,
 } from './components/icons'
 
+import { AuthProvider } from './lib/auth_context'
+import { MigrationWizard } from './components/MigrationWizard'
+
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const Lancamentos = lazy(() => import('./components/Lancamentos'))
 const Contas = lazy(() => import('./components/Contas'))
@@ -61,8 +64,9 @@ export default function App() {
   const [aba, setAba] = useState<Aba>('dashboard')
 
   return (
-    <FinoraProvider>
-      <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+    <AuthProvider>
+      <FinoraProvider>
+        <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
         {/* Sidebar (desktop) */}
         <aside className="hidden lg:flex flex-col border-r border-slate-200/80 bg-white/70 backdrop-blur-sm px-3 py-5">
           <div className="px-2">
@@ -128,6 +132,7 @@ export default function App() {
           </header>
 
           <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-6xl w-full mx-auto">
+            <MigrationWizard />
             <Suspense fallback={<Carregando />}>
               <div key={aba} className="animate-fade-in">
                 {aba === 'dashboard' && <Dashboard onNovoLancamento={() => setAba('lancamentos')} />}
@@ -146,6 +151,7 @@ export default function App() {
         </div>
       </div>
     </FinoraProvider>
+  </AuthProvider>
   )
 }
 
