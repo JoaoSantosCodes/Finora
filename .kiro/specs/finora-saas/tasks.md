@@ -360,7 +360,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** pago/pendente; transferência sem afetar receita/despesa.
   - _Requirements: 8, 9_
 
-- [ ] 17.3 WEB-004C — Cartões e Faturas (Credit Cards)
+- [x] 17.3 WEB-004C — Cartões e Faturas (Credit Cards)
   - **Arquivos/módulos:** `src/ui/Cartoes.tsx`, `useCards`, `useInvoices`.
   - **Dependências:** WEB-004 (parent), API-002D, API-002E, API-002F.
   - **Critérios de aceitação:** faturas por ciclo; despesa parcelada; total derivado.

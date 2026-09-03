@@ -126,6 +126,7 @@ Documento consolidado de diretrizes de arquitetura, segurança, regras de desenv
 | ID | Tarefa / Módulo | Status | Descrição & Escopo |
 |---|---|---|---|
 | 23 | **WEB-004A Módulo de Contas** | ✅ Concluído | Tela de gestão de Contas Bancárias (`Contas.tsx`), saldo consolidado, criação, arquivamento e remoção do selo BREVE. |
+| 24 | **WEB-004C Módulo de Cartões e Faturas** | ✅ Concluído | Tela de Cartões de Crédito (`Cartoes.tsx`) e Faturas por Ciclo (`Faturas.tsx`), pagamento de faturas e remoção dos selos BREVE. |
 
 ---
 
