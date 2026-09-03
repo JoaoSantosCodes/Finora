@@ -1,53 +1,117 @@
-# Finora
+# ⚡ Finora — Controle Financeiro Pessoal & Familiar SaaS
 
-App web de controle financeiro pessoal, inspirado na planilha de mesmo nome. Feito com React + Vite + TypeScript + Tailwind + Recharts, com dados salvos no navegador (LocalStorage) e pronto para deploy no Cloudflare Pages.
+> Plataforma moderna de gestão financeira pessoal e familiar **offline-first**, com arquitetura **Supabase RLS fail-closed**, motor de sincronização em segundo plano, gestão de cartões/faturas, orçamentos inteligentes, metas e faturamento recorrente.
 
-## Estrutura (espelhando a planilha)
+🌐 **Deploy em Produção**: [https://finora.joaocarlosrh23.workers.dev/](https://finora.joaocarlosrh23.workers.dev/)
 
-| Aba da planilha              | No app                                                      |
-| ---------------------------- | ----------------------------------------------------------- |
-| Dashboard                    | Aba **Dashboard**: indicadores, gráficos e tabela           |
-| Planilha Financeira - Orange | Aba **Lançamentos**: cadastro de despesas                   |
-| Calc_Data                    | `src/lib/calc.ts`: consolidações (por mês, categoria, etc.) |
-| Banco de dados               | Aba **Configurações**: categorias, cores e classificações   |
+---
 
-## Funcionalidades
+## 🎨 Screenshots & Módulos da Plataforma
 
-- **Indicadores**: Total de Gastos, Total Pago, Total Pendente
-- **Gráficos**: Gastos por Categoria (pizza) e Comparação de Meses (barras)
-- **Lançamentos**: descrição, categoria, data, valor, parcelado e pago
-- **Configurações**: categorias com cor e classificação (Essencial, Fixo, Variável, Supérfluo)
-- Dados persistidos no LocalStorage
+### 💳 1. Contas Bancárias
+Gerenciamento de contas correntes, poupanças e carteiras com saldo total consolidado em BRL.
+![Contas Bancárias](docs/screenshots/contas.png)
 
-## Como rodar
+---
 
+### 💳 2. Cartões de Crédito
+Controle de limites totais, dia de fechamento de fatura (`closing_day`) e dia de vencimento (`due_day`).
+![Cartões de Crédito](docs/screenshots/cartoes.png)
+
+---
+
+### 📄 3. Faturas de Cartão por Ciclo
+Visualização de faturas por status (Abertas, Fechadas e Pagas) com modal de quitação e débito em conta.
+![Faturas por Ciclo](docs/screenshots/faturas.png)
+
+---
+
+### 📊 4. Orçamentos Mensais por Categoria
+Planejamento de limite de gastos por categoria com indicadores visuais de consumo (Verde < 80%, Laranja 80-99%, Vermelho $\ge$ 100%).
+![Orçamentos por Categoria](docs/screenshots/orcamentos.png)
+
+---
+
+### 🎯 5. Metas Financeiras & Aportes
+Acompanhamento de objetivos de economia, barras de progresso percentual e modal para registro de novos aportes.
+![Metas Financeiras](docs/screenshots/metas.png)
+
+---
+
+### 📈 6. Relatórios Financeiros & Exportação de Dados
+Balanço mensal de receitas, despesas e saldo líquido com suporte à exportação de dados nos formatos **CSV** e **JSON**.
+![Relatórios Financeiros](docs/screenshots/relatorios.png)
+
+---
+
+### 💡 7. Insights Inteligentes
+Diagnósticos automáticos sobre o comportamento financeiro da Household, variação atípica de gastos e alertas de vencimento ($\le 3$ dias).
+![Insights Inteligentes](docs/screenshots/insights.png)
+
+---
+
+## 🚀 Funcionalidades Principais
+
+- 🔒 **Multi-tenancy RLS Fail-Closed**: Isolamento estrito de dados por Household com `FORCE ROW LEVEL SECURITY`.
+- ⚡ **Offline-First Sync Engine**: Fila de mutações locais com idempotência (`client_mutation_id`) e sincronização automática ao reconectar.
+- 💳 **Gestão Completa de Cartões & Faturas**: Cálculo automático de vencimentos via `@finora/core` e liquidação de faturas.
+- 📊 **Orçamentos & Alertas de Consumo**: Alertas visuais de limite e FeatureGate para restrição por plano.
+- 🎯 **Metas Financeiras**: Acompanhamento de metas de economia com registro de contribuições/aportes.
+- 💳 **Billing & Webhooks Idempotentes**: Processamento idempotente de webhooks do Stripe gravando em `subscription_events` e máquina de estados de assinaturas (trial 14d, carência `past_due` 7d, downgrades).
+- 🧪 **30 Seções de Teste PGlite & Vitest 100% GREEN**: Testes locais em PostgreSQL puro no navegador via `@electric-sql/pglite`.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons.
+- **Backend & Database**: Supabase (PostgreSQL), Edge Functions, RLS Policies, RPCs SQL Atômicas.
+- **Offline & Core Engine**: TypeScript ESM (`@finora/core`), Custom Mutation Queue.
+- **Testes & QA**: Vitest, PGlite (Native In-Memory Postgres Runner).
+- **Deployment**: Cloudflare Workers / Pages CI/CD.
+
+---
+
+## 💻 Como Rodar Localmente
+
+### 1. Clonar o repositório
+```bash
+git clone https://github.com/JoaoSantosCodes/Finora.git
+cd Finora/App
+```
+
+### 2. Instalar dependências
 ```bash
 npm install
+```
+
+### 3. Executar o servidor de desenvolvimento
+```bash
 npm run dev
 ```
+Acesse `http://localhost:5173/` no seu navegador.
 
-Abra o endereço mostrado no terminal (geralmente http://localhost:5173).
+---
 
-## Build de produção
+## 🧪 Executar Testes
 
+### Executar a suíte de banco PGlite (30 Seções)
 ```bash
-npm run build
-npm run preview
+npm run test:db
 ```
 
-## Deploy no Cloudflare Pages
+### Executar a suíte Vitest (21 suítes / 57 testes)
+```bash
+npx vitest run
+```
 
-1. Faça push do projeto para o GitHub (`JoaoSantosCodes/Finora`).
-2. No painel do Cloudflare, crie um projeto em **Workers & Pages > Pages > Connect to Git**.
-3. Configure o build:
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-4. Salve e faça o deploy.
+### Compilar para Produção
+```bash
+npm run build
+```
 
-O roteamento SPA é tratado pelo `wrangler.toml` (`not_found_handling = "single-page-application"`), e o `[build] command` garante que o `npm run build` rode antes de publicar.
+---
 
-## Próximos passos possíveis
+## 📄 Licença
 
-- Backend com Cloudflare D1 (SQLite) para sincronizar entre dispositivos
-- Importação dos dados diretamente do Google Sheets
-- Filtros por período e por categoria no Dashboard
+Este projeto está sob a licença MIT. Desenvolvido por **João Santos**.
