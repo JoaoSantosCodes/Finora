@@ -215,7 +215,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** enforcement centralizado (parte pura) disponível para os serviços.
   - _Requirements: 17, 18_
 
-- [ ] 12. API-002 — Application Services (parent: casos de uso por módulo)
+- [x] 12. API-002 — Application Services (parent: casos de uso por módulo)
   - **Objetivo:** orquestrar autorização por papel, FeatureGate, Financial Core e repositórios, um serviço por domínio para permitir teste isolado.
   - **Contexto:** design.md §Components and Interfaces, §Authorization, §Error Handling.
   - **Arquivos/módulos:** `api/services/*`, rotas `api/v1/*`.
