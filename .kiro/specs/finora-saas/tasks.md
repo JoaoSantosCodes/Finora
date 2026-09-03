@@ -348,7 +348,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** MVP de UI completo; dependências do V0 removidas com segurança.
   - _Requirements: 6, 7, 8, 9, 10, 11, 14, 18_
 
-- [ ] 17.1 WEB-004A — Contas (Accounts)
+- [x] 17.1 WEB-004A — Contas (Accounts)
   - **Arquivos/módulos:** `src/ui/Contas.tsx`, `useAccounts`.
   - **Dependências:** WEB-004 (parent), API-002A.
   - **Critérios de aceitação:** CRUD e arquivamento; limite via FeatureGate.

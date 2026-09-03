@@ -121,4 +121,12 @@ Documento consolidado de diretrizes de arquitetura, segurança, regras de desenv
 
 ---
 
+### ⏳ Fase 6: Módulos do Frontend (Desbloqueio da Sidebar UI) — EM ANDAMENTO
+
+| ID | Tarefa / Módulo | Status | Descrição & Escopo |
+|---|---|---|---|
+| 23 | **WEB-004A Módulo de Contas** | ✅ Concluído | Tela de gestão de Contas Bancárias (`Contas.tsx`), saldo consolidado, criação, arquivamento e remoção do selo BREVE. |
+
+---
+
 *Documento mantido e atualizado de acordo com a especificação técnica do Finora SaaS.*

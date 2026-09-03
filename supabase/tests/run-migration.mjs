@@ -638,4 +638,7 @@ await runBillingServiceTests()
 const { runJobSchedulerTests } = await import('../../src/api/jobs/job_scheduler.pure.ts')
 await runJobSchedulerTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001, WEB-001/002, BILL-002 (Billing Service) e JOB-001 (Job Scheduler) válidas.')
+const { runContasModuleTests } = await import('../../src/components/Contas.pure.ts')
+await runContasModuleTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001, WEB-001/002, BILL-002, JOB-001 e FASE 6A (Módulo de Contas) válidas.')

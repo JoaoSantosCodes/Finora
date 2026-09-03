@@ -9,9 +9,10 @@ import {
 
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const Lancamentos = lazy(() => import('./components/Lancamentos'))
+const Contas = lazy(() => import('./components/Contas'))
 const Configuracoes = lazy(() => import('./components/Configuracoes'))
 
-type Aba = 'dashboard' | 'lancamentos' | 'configuracoes'
+type Aba = 'dashboard' | 'lancamentos' | 'contas' | 'configuracoes'
 
 interface NavItem {
   id: Aba
@@ -19,7 +20,7 @@ interface NavItem {
   Icon: typeof IconDashboard
 }
 
-// Itens funcionais hoje (V0). Os demais módulos aparecem como "Em breve".
+// Itens funcionais hoje. Os demais módulos aparecem como "Em breve".
 const navPrincipal: NavItem[] = [
   { id: 'dashboard', label: 'Visão geral', Icon: IconDashboard },
 ]
@@ -29,7 +30,7 @@ const grupos: { titulo: string; itens: { label: string; ativo?: Aba }[] }[] = [
     titulo: 'Financeiro',
     itens: [
       { label: 'Lançamentos', ativo: 'lancamentos' },
-      { label: 'Contas' },
+      { label: 'Contas', ativo: 'contas' },
       { label: 'Cartões' },
       { label: 'Faturas' },
     ],
@@ -106,9 +107,10 @@ export default function App() {
           {/* Topbar (mobile) */}
           <header className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200/80 px-4 py-3">
             <Logo compact />
-            <nav className="mt-3 flex gap-1">
+            <nav className="mt-3 flex gap-1 overflow-x-auto">
               <MobileTab label="Visão geral" Icon={IconDashboard} active={aba === 'dashboard'} onClick={() => setAba('dashboard')} />
               <MobileTab label="Lançamentos" Icon={IconList} active={aba === 'lancamentos'} onClick={() => setAba('lancamentos')} />
+              <MobileTab label="Contas" Icon={IconWallet} active={aba === 'contas'} onClick={() => setAba('contas')} />
               <MobileTab label="Config." Icon={IconSettings} active={aba === 'configuracoes'} onClick={() => setAba('configuracoes')} />
             </nav>
           </header>
@@ -118,6 +120,7 @@ export default function App() {
               <div key={aba} className="animate-fade-in">
                 {aba === 'dashboard' && <Dashboard onNovoLancamento={() => setAba('lancamentos')} />}
                 {aba === 'lancamentos' && <Lancamentos />}
+                {aba === 'contas' && <Contas />}
                 {aba === 'configuracoes' && <Configuracoes />}
               </div>
             </Suspense>
