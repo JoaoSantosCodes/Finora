@@ -288,7 +288,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** contribuição>0; conclusão quando acumulado≥alvo.
   - _Requirements: 14 — valida Correctness Property 2_
 
-- [ ] 12.10 API-002J — Analytics Service
+- [x] 12.10 API-002J — Analytics Service
   - **Objetivo:** indicadores/relatórios consolidados do Dashboard.
   - **Arquivos/módulos:** `api/services/analytics.ts`, `api/v1/analytics/dashboard`.
   - **Dependências:** API-002B, API-002F.

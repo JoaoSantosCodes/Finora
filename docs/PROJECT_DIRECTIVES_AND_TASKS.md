@@ -99,6 +99,7 @@ Documento consolidado de diretrizes de arquitetura, segurança, regras de desenv
 | 16 | **API-002D Installment Service** | ✅ Concluído | Criação atômica de parcelamentos via `rpc_create_installment_transaction`, validação do FeatureGate (`canUse`) e invariante $\sum \text{parcelas} = \text{totalCents}$. |
 | 17 | **API-002E CreditCard Service** | ✅ Concluído | CRUD de cartões com limite, validação de dias 1-31, limite do plano via FeatureGate (`canCreate`) e pagamento de fatura. |
 | 18 | **API-002F Category Service** | ✅ Concluído | CRUD de categorias com classificação estrita, unicidade de nome case-insensitive, limite do plano via FeatureGate e reatribuição na exclusão. |
+| 18.1 | **API-002J Analytics Service** | ✅ Concluído | Consolidação de indicadores e relatórios do Dashboard: saldo total, receitas/despesas sem transferências, total pendente, despesas por categoria e evolução mensal. |
 
 ---
 

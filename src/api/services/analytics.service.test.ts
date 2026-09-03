@@ -1,11 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// BARREL PÚBLICO DOS SERVIÇOS DA APLICAÇÃO (API-002)
+// VITEST WRAPPER PARA OS TESTES DO ANALYTICS SERVICE (API-002J)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export * from './account.service.ts'
-export * from './transaction.service.ts'
-export * from './transfer.service.ts'
-export * from './installment.service.ts'
-export * from './credit_card.service.ts'
-export * from './category.service.ts'
-export * from './analytics.service.ts'
+import { describe, it } from 'vitest'
+import { runAnalyticsServiceTests } from './analytics.service.pure.ts'
+
+describe('AnalyticsService (API-002J)', () => {
+  it('executa os 5 testes do AnalyticsService com sucesso', async () => {
+    await runAnalyticsServiceTests()
+  })
+})
