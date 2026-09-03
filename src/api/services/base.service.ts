@@ -2,7 +2,9 @@
 // BASE APPLICATION SERVICE & CONTEXT DEFINITIONS (API-002)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { Client } from 'pg'
+export interface Client {
+  query<R = any>(queryText: string, values?: any[]): Promise<{ rows: R[]; rowCount: number }>
+}
 import { PermissionDeniedError } from '../errors.ts'
 import type { PlanId } from '../../../packages/core/src/plans.ts'
 
