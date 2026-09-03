@@ -626,4 +626,7 @@ await runCategoryServiceTests()
 const { runAnalyticsServiceTests } = await import('../../src/api/services/analytics.service.pure.ts')
 await runAnalyticsServiceTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F e API-002J (Analytics Service) válidas.')
+const { runSyncEngineTests } = await import('../../src/api/sync/sync_engine.pure.ts')
+await runSyncEngineTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J e SYNC-001 (Sync Engine) válidas.')

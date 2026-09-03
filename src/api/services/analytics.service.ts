@@ -7,7 +7,7 @@ import type { PlanId } from '../../../packages/core/src/plans.ts'
 import { accountBalance } from '../../../packages/core/src/transactions.ts'
 import { AccountRepository } from '../repositories/account.repository.ts'
 import { CategoryRepository } from '../repositories/category.repository.ts'
-import { TransactionRecord, TransactionRepository } from '../repositories/transaction.repository.ts'
+import { TransactionRepository, type TransactionRecord } from '../repositories/transaction.repository.ts'
 
 export interface CategoryExpenseSummary {
   categoryId: string

@@ -317,7 +317,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **DoD:** casca autenticada pronta para receber as telas migradas.
   - _Requirements: 1, 2, 5.6_
 
-- [ ] 15. WEB-002 — Migrar o Store (LocalStorage → repositório remoto + cache)
+- [x] 15. WEB-002 — Migrar o Store (LocalStorage → repositório remoto + cache / SYNC-001)
   - **Objetivo:** trocar a fonte de verdade do Context/LocalStorage para o backend, com cache local.
   - **Contexto:** design.md §Web/PWA, §Offline/Sync.
   - **Arquivos/módulos:** `src/store.tsx` → `src/app/hooks/*`, `src/data/remote.ts`, `src/data/localCache.ts`.
