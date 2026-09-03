@@ -632,4 +632,10 @@ await runSyncEngineTests()
 const { runStoreIntegrationTests } = await import('../../src/store.pure.ts')
 await runStoreIntegrationTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001 e WEB-001/002 (Store Integration) válidas.')
+const { runBillingServiceTests } = await import('../../src/api/billing/billing_service.pure.ts')
+await runBillingServiceTests()
+
+const { runJobSchedulerTests } = await import('../../src/api/jobs/job_scheduler.pure.ts')
+await runJobSchedulerTests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001, WEB-001/002, BILL-002 (Billing Service) e JOB-001 (Job Scheduler) válidas.')

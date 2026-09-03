@@ -295,7 +295,7 @@ As waves indicam grupos de tarefas que podem ser executadas em paralelo, respeit
   - **Critérios de aceitação:** exclui transfer; pendente acumulado; <2s p95 até 5000 transações.
   - _Requirements: 15, 23.1 — valida Correctness Properties 5, 6_
 
-- [ ] 13. API-003 — Jobs agendados (fatura, notificações, billing)
+- [x] 13. API-003 — Jobs agendados (fatura, notificações, billing)
   - **Objetivo:** processos periódicos do design.
   - **Contexto:** design.md §Components and Interfaces (Jobs).
   - **Arquivos/módulos:** `api/jobs/{invoice-close,notifications,billing-cycle}.ts`, agendador.
