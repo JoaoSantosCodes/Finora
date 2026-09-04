@@ -18,7 +18,6 @@ client_secret_*.json
 *.pem
 *.key
 
-# Ignore local Windows Junction / Symlink folder App
-App/
-App
+# Ignore local Windows Junction / Symlink folder App (raiz apenas — não deve casar com android/app/ etc.)
+/App/
 
