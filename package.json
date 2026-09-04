@@ -8,18 +8,23 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npx cap open android",
     "test:db": "node supabase/tests/run-migration.mjs",
     "db:apply": "node supabase/tests/apply-migrations.mjs",
     "db:verify": "node supabase/tests/verify-prod.mjs",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
     "@supabase/supabase-js": "^2.112.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
     "@electric-sql/pglite": "^0.5.8",
     "@types/node": "^26.4.1",
     "@types/react": "^18.3.3",
