@@ -17,6 +17,10 @@ client_secret_*.json
 *service-account*.json
 *.pem
 *.key
+*.jks
+*.keystore
+keystore.properties
+/secrets/
 
 # Ignore local Windows Junction / Symlink folder App (raiz apenas — não deve casar com android/app/ etc.)
 /App/
