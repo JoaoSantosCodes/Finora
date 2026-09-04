@@ -7,8 +7,9 @@ import {
   IconWallet,
 } from './components/icons'
 
-import { AuthProvider } from './lib/auth_context'
+import { AuthProvider, useAuth } from './lib/auth_context'
 import { MigrationWizard } from './components/MigrationWizard'
+import { Login } from './components/Login'
 
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const Lancamentos = lazy(() => import('./components/Lancamentos'))
@@ -61,97 +62,141 @@ const grupos: { titulo: string; itens: { label: string; ativo: Aba }[] }[] = [
 ]
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
+  )
+}
+
+function AuthGate() {
+  const { status, errorMessage, refreshHousehold, signOut } = useAuth()
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Carregando />
+      </div>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return <Login />
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="card max-w-sm w-full p-6 text-center space-y-4">
+          <p className="text-sm text-rose-600">{errorMessage ?? 'Não foi possível carregar sua conta.'}</p>
+          <div className="flex gap-2 justify-center">
+            <button onClick={() => refreshHousehold()} className="btn-primary">
+              Tentar novamente
+            </button>
+            <button onClick={() => signOut()} className="btn-ghost">
+              Sair
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <FinoraProvider>
+      <AppShell />
+    </FinoraProvider>
+  )
+}
+
+function AppShell() {
   const [aba, setAba] = useState<Aba>('dashboard')
 
   return (
-    <AuthProvider>
-      <FinoraProvider>
-        <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
-        {/* Sidebar (desktop) */}
-        <aside className="hidden lg:flex flex-col border-r border-slate-200/80 bg-white/70 backdrop-blur-sm px-3 py-5">
-          <div className="px-2">
-            <Logo />
-          </div>
-
-          <nav className="mt-6 flex-1 overflow-y-auto">
-            {navPrincipal.map(({ id, label, Icon }) => (
-              <NavButton
-                key={id}
-                label={label}
-                Icon={Icon}
-                active={aba === id}
-                onClick={() => setAba(id)}
-              />
-            ))}
-
-            {grupos.map((g) => (
-              <div key={g.titulo} className="mt-5">
-                <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  {g.titulo}
-                </p>
-                {g.itens.map((item) =>
-                  item.ativo ? (
-                    <NavButton
-                      key={item.label}
-                      label={item.label}
-                      Icon={IconList}
-                      active={aba === item.ativo}
-                      onClick={() => setAba(item.ativo!)}
-                    />
-                  ) : (
-                    <NavDisabled key={item.label} label={item.label} />
-                  ),
-                )}
-              </div>
-            ))}
-
-            <div className="mt-5 border-t border-slate-100 pt-3">
-              <NavButton
-                label="Configurações"
-                Icon={IconSettings}
-                active={aba === 'configuracoes'}
-                onClick={() => setAba('configuracoes')}
-              />
-            </div>
-          </nav>
-
-          <ProfileFooter />
-        </aside>
-
-        {/* Conteúdo */}
-        <div className="flex flex-col min-h-screen">
-          {/* Topbar (mobile) */}
-          <header className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200/80 px-4 py-3">
-            <Logo compact />
-            <nav className="mt-3 flex gap-1 overflow-x-auto">
-              <MobileTab label="Visão geral" Icon={IconDashboard} active={aba === 'dashboard'} onClick={() => setAba('dashboard')} />
-              <MobileTab label="Lançamentos" Icon={IconList} active={aba === 'lancamentos'} onClick={() => setAba('lancamentos')} />
-              <MobileTab label="Contas" Icon={IconWallet} active={aba === 'contas'} onClick={() => setAba('contas')} />
-              <MobileTab label="Config." Icon={IconSettings} active={aba === 'configuracoes'} onClick={() => setAba('configuracoes')} />
-            </nav>
-          </header>
-
-          <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-6xl w-full mx-auto">
-            <MigrationWizard />
-            <Suspense fallback={<Carregando />}>
-              <div key={aba} className="animate-fade-in">
-                {aba === 'dashboard' && <Dashboard onNovoLancamento={() => setAba('lancamentos')} />}
-                {aba === 'lancamentos' && <Lancamentos />}
-                {aba === 'contas' && <Contas />}
-                {aba === 'cartoes' && <Cartoes />}
-                {aba === 'faturas' && <Faturas />}
-                {aba === 'orcamentos' && <Orcamentos />}
-                {aba === 'metas' && <Metas />}
-                {aba === 'relatorios' && <Relatorios />}
-                {aba === 'insights' && <Insights />}
-                {aba === 'configuracoes' && <Configuracoes />}
-              </div>
-            </Suspense>
-          </main>
+    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+      {/* Sidebar (desktop) */}
+      <aside className="hidden lg:flex flex-col border-r border-slate-200/80 bg-white/70 backdrop-blur-sm px-3 py-5">
+        <div className="px-2">
+          <Logo />
         </div>
+
+        <nav className="mt-6 flex-1 overflow-y-auto">
+          {navPrincipal.map(({ id, label, Icon }) => (
+            <NavButton
+              key={id}
+              label={label}
+              Icon={Icon}
+              active={aba === id}
+              onClick={() => setAba(id)}
+            />
+          ))}
+
+          {grupos.map((g) => (
+            <div key={g.titulo} className="mt-5">
+              <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                {g.titulo}
+              </p>
+              {g.itens.map((item) =>
+                item.ativo ? (
+                  <NavButton
+                    key={item.label}
+                    label={item.label}
+                    Icon={IconList}
+                    active={aba === item.ativo}
+                    onClick={() => setAba(item.ativo!)}
+                  />
+                ) : (
+                  <NavDisabled key={item.label} label={item.label} />
+                ),
+              )}
+            </div>
+          ))}
+
+          <div className="mt-5 border-t border-slate-100 pt-3">
+            <NavButton
+              label="Configurações"
+              Icon={IconSettings}
+              active={aba === 'configuracoes'}
+              onClick={() => setAba('configuracoes')}
+            />
+          </div>
+        </nav>
+
+        <ProfileFooter />
+      </aside>
+
+      {/* Conteúdo */}
+      <div className="flex flex-col min-h-screen">
+        {/* Topbar (mobile) */}
+        <header className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200/80 px-4 py-3">
+          <Logo compact />
+          <nav className="mt-3 flex gap-1 overflow-x-auto">
+            <MobileTab label="Visão geral" Icon={IconDashboard} active={aba === 'dashboard'} onClick={() => setAba('dashboard')} />
+            <MobileTab label="Lançamentos" Icon={IconList} active={aba === 'lancamentos'} onClick={() => setAba('lancamentos')} />
+            <MobileTab label="Contas" Icon={IconWallet} active={aba === 'contas'} onClick={() => setAba('contas')} />
+            <MobileTab label="Config." Icon={IconSettings} active={aba === 'configuracoes'} onClick={() => setAba('configuracoes')} />
+          </nav>
+        </header>
+
+        <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-6xl w-full mx-auto">
+          <MigrationWizard />
+          <Suspense fallback={<Carregando />}>
+            <div key={aba} className="animate-fade-in">
+              {aba === 'dashboard' && <Dashboard onNovoLancamento={() => setAba('lancamentos')} />}
+              {aba === 'lancamentos' && <Lancamentos />}
+              {aba === 'contas' && <Contas />}
+              {aba === 'cartoes' && <Cartoes />}
+              {aba === 'faturas' && <Faturas />}
+              {aba === 'orcamentos' && <Orcamentos />}
+              {aba === 'metas' && <Metas />}
+              {aba === 'relatorios' && <Relatorios />}
+              {aba === 'insights' && <Insights />}
+              {aba === 'configuracoes' && <Configuracoes />}
+            </div>
+          </Suspense>
+        </main>
       </div>
-    </FinoraProvider>
-  </AuthProvider>
+    </div>
   )
 }
 
@@ -225,15 +270,32 @@ function Logo({ compact = false }: { compact?: boolean }) {
 }
 
 function ProfileFooter() {
+  const { user, planId, signOut } = useAuth()
+  const email = user?.email ?? ''
+  const nome = (user?.user_metadata?.display_name as string | undefined) || email.split('@')[0] || 'Usuário'
+  const iniciais = nome
+    .split(/\s+/)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+
   return (
     <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200/80 px-3 py-2.5">
       <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-600 font-semibold flex items-center justify-center text-sm">
-        JS
+        {iniciais || 'U'}
       </div>
-      <div className="leading-tight min-w-0">
-        <p className="text-sm font-semibold text-slate-800 truncate">João Santos</p>
-        <p className="text-xs text-brand-600 font-medium">Plano Pro</p>
+      <div className="leading-tight min-w-0 flex-1">
+        <p className="text-sm font-semibold text-slate-800 truncate">{nome}</p>
+        <p className="text-xs text-brand-600 font-medium capitalize">Plano {planId}</p>
       </div>
+      <button
+        onClick={() => signOut()}
+        title="Sair"
+        className="text-xs font-semibold text-slate-400 hover:text-rose-600 transition px-2 py-1"
+      >
+        Sair
+      </button>
     </div>
   )
 }
