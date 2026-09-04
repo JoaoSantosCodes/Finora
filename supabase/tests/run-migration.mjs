@@ -653,4 +653,7 @@ await runMetasModuleTests()
 const { runRelatoriosModuleTests } = await import('../../src/components/Relatorios.pure.ts')
 await runRelatoriosModuleTests()
 
-console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001, WEB-001/002, BILL-002, JOB-001 e FASE 6A/6B/6C/6D/6E (Módulos do Frontend completos) válidas.')
+const { runGate2_1Tests } = await import('../../src/lib/gate2_1.pure.ts')
+await runGate2_1Tests()
+
+console.log('\nTodos os checks passaram. Migrações DB-001 a API-001 (0008), API-002A-F, API-002J, SYNC-001, WEB-001/002, BILL-002, JOB-001, FASE 6A-E e GATE 2.1 (Hardening & Idempotência) válidas.')

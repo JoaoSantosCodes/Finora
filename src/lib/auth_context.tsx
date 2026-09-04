@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// CONTEXTO DE AUTENTICAÇÃO E SESSÃO DE HOUSEHOLD (GATE 2)
+// CONTEXTO DE AUTENTICAÇÃO E SESSÃO DE HOUSEHOLD ROBUSTO (GATE 2.1)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
@@ -8,7 +8,10 @@ import { supabase } from './supabase'
 import type { ServiceContext, MemberRole } from '../api/services/base.service'
 import type { PlanId } from '../../packages/core/src/plans'
 
+export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
+
 interface AuthState {
+  status: AuthStatus
   session: Session | null
   user: User | null
   loading: boolean
@@ -17,9 +20,11 @@ interface AuthState {
   planId: PlanId
   serviceContext: ServiceContext | null
   signOut: () => Promise<void>
+  refreshHousehold: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState>({
+  status: 'loading',
   session: null,
   user: null,
   loading: true,
@@ -28,6 +33,7 @@ const AuthContext = createContext<AuthState>({
   planId: 'free',
   serviceContext: null,
   signOut: async () => {},
+  refreshHousehold: async () => {},
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -36,34 +42,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [householdId, setHouseholdId] = useState<string | null>('demo-household-id')
   const [userRole, setUserRole] = useState<MemberRole | null>('owner')
   const [planId, setPlanId] = useState<PlanId>('free')
-  const [loading, setLoading] = useState<boolean>(true)
+  const [status, setStatus] = useState<AuthStatus>('loading')
 
   useEffect(() => {
-    // Escuta mudanças de sessão no Supabase Auth
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchHouseholdForUser(session.user.id)
-      } else {
-        setLoading(false)
-      }
+      handleSessionChange(session)
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchHouseholdForUser(session.user.id)
-      } else {
-        setLoading(false)
-      }
+      handleSessionChange(session)
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const handleSessionChange = (session: Session | null) => {
+    setSession(session)
+    setUser(session?.user ?? null)
+
+    if (session?.user) {
+      fetchHouseholdForUser(session.user.id)
+    } else {
+      setStatus('unauthenticated')
+    }
+  }
 
   const fetchHouseholdForUser = async (userId: string) => {
     try {
@@ -72,27 +76,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('household_id, role')
         .eq('profile_id', userId)
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (!error && data) {
         setHouseholdId(data.household_id)
         setUserRole(data.role as MemberRole)
+        setStatus('authenticated')
 
-        // Busca o plano ativo da Household em subscriptions
         const { data: subData } = await supabase
           .from('subscriptions')
           .select('plan_id')
           .eq('household_id', data.household_id)
-          .single()
+          .maybeSingle()
 
         if (subData?.plan_id) {
           setPlanId(subData.plan_id as PlanId)
         }
+      } else {
+        // Fallback gracioso para ambiente local/demo
+        setHouseholdId('demo-household-id')
+        setUserRole('owner')
+        setStatus('authenticated')
       }
     } catch (e) {
-      console.warn('Usando contexto fallback em ambiente local:', e)
-    } finally {
-      setLoading(false)
+      console.warn('Usando contexto fallback local:', e)
+      setHouseholdId('demo-household-id')
+      setUserRole('owner')
+      setStatus('authenticated')
     }
   }
 
@@ -102,33 +112,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setHouseholdId(null)
     setUserRole(null)
+    setStatus('unauthenticated')
   }
 
-  const serviceContext: ServiceContext | null = user
-    ? {
-        userId: user.id,
-        householdId: householdId || 'demo-household-id',
-        userRole: userRole || 'owner',
-        planId,
-      }
-    : {
-        userId: 'demo-user-id',
-        householdId: householdId || 'demo-household-id',
-        userRole: userRole || 'owner',
-        planId: 'free',
-      }
+  const refreshHousehold = async () => {
+    if (user) {
+      await fetchHouseholdForUser(user.id)
+    }
+  }
+
+  const serviceContext: ServiceContext | null = {
+    userId: user?.id || 'demo-user-id',
+    householdId: householdId || 'demo-household-id',
+    userRole: userRole || 'owner',
+    planId: planId || 'free',
+  }
 
   return (
     <AuthContext.Provider
       value={{
+        status,
         session,
         user,
-        loading,
+        loading: status === 'loading',
         householdId,
         userRole,
         planId,
         serviceContext,
         signOut,
+        refreshHousehold,
       }}
     >
       {children}
