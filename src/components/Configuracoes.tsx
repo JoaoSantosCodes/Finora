@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useFinora } from '../store'
+import { useAuth } from '../lib/auth_context'
 import type { Classificacao } from '../types'
 import { IconPlus, IconTrash } from './icons'
 
@@ -19,6 +20,7 @@ const paleta = [
 
 export default function Configuracoes() {
   const { categorias, despesas, adicionarCategoria, removerCategoria } = useFinora()
+  const { user, planId, signOut } = useAuth()
 
   const [nome, setNome] = useState('')
   const [cor, setCor] = useState('#F97316')
@@ -43,6 +45,17 @@ export default function Configuracoes() {
         <p className="text-sm text-slate-500">
           Gerencie categorias, cores e classificações.
         </p>
+      </div>
+
+      <div className="card p-5 animate-fade-in flex items-center justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <h2 className="font-semibold text-slate-800">Conta</h2>
+          <p className="text-sm text-slate-500 truncate">{user?.email}</p>
+          <p className="text-xs text-brand-600 font-medium capitalize mt-0.5">Plano {planId}</p>
+        </div>
+        <button onClick={() => signOut()} className="btn-ghost border border-slate-200">
+          Sair da conta
+        </button>
       </div>
 
       <form onSubmit={submeter} className="card p-5 animate-fade-in">
