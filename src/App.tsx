@@ -272,7 +272,13 @@ function Logo({ compact = false }: { compact?: boolean }) {
 function ProfileFooter() {
   const { user, planId, signOut } = useAuth()
   const email = user?.email ?? ''
-  const nome = (user?.user_metadata?.display_name as string | undefined) || email.split('@')[0] || 'Usuário'
+  const metadata = user?.user_metadata ?? {}
+  const nome =
+    (metadata.display_name as string | undefined) ||
+    (metadata.full_name as string | undefined) ||
+    (metadata.name as string | undefined) ||
+    email.split('@')[0] ||
+    'Usuário'
   const iniciais = nome
     .split(/\s+/)
     .map((p) => p[0])

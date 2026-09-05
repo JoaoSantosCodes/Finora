@@ -125,8 +125,11 @@ export function Login() {
             <form onSubmit={handleSubmit} className="space-y-3.5">
               {modo === 'cadastrar' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Nome (opcional)</label>
+                  <label htmlFor="login-nome" className="block text-xs font-semibold text-slate-500 mb-1">
+                    Nome (opcional)
+                  </label>
                   <input
+                    id="login-nome"
                     className="input"
                     type="text"
                     value={nome}
@@ -138,8 +141,11 @@ export function Login() {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">E-mail</label>
+                <label htmlFor="login-email" className="block text-xs font-semibold text-slate-500 mb-1">
+                  E-mail
+                </label>
                 <input
+                  id="login-email"
                   className="input"
                   type="email"
                   required
@@ -151,8 +157,11 @@ export function Login() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Senha</label>
+                <label htmlFor="login-senha" className="block text-xs font-semibold text-slate-500 mb-1">
+                  Senha
+                </label>
                 <input
+                  id="login-senha"
                   className="input"
                   type="password"
                   required
@@ -166,8 +175,11 @@ export function Login() {
 
               {modo === 'cadastrar' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Confirmar senha</label>
+                  <label htmlFor="login-confirmar-senha" className="block text-xs font-semibold text-slate-500 mb-1">
+                    Confirmar senha
+                  </label>
                   <input
+                    id="login-confirmar-senha"
                     className="input"
                     type="password"
                     required
